@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1f2226">
+<link rel="icon" href="data:,">
+<title>Salvage — build free tools from GitHub parts</title>
+<style>
+/* ================================================================
+   SALVAGE — "salvage yard" style
+   Corrugated steel panels, hazard-stripe header, safety-orange
+   stencil type, parts tagged like scrapyard inventory. Everything you
+   find on GitHub is a part; everything you build is a machine.
+   ================================================================ */
+:root{
+  --bg:#1f2226;--panel:#2b2f35;--panel2:#353a41;--fg:#ece8df;--fg2:#a7a299;--line:#474d56;
+  --org:#ff6b1a;--yel:#f2c230;--grn:#5cb86c;--red:#e5484d;--blu:#58a6ff;
+  --stencil:Impact,"Haettenschweiler","Arial Narrow Bold","Franklin Gothic Bold",sans-serif-condensed,"Arial Black",sans-serif;
+  --body:-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 var(--body);-webkit-text-size-adjust:100%}
+body{padding-bottom:calc(70px + env(safe-area-inset-bottom));background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.018) 0 2px,transparent 2px 16px)}
+a{color:var(--blu)}
+button,input,select,textarea{font:inherit;color:inherit}
+header.top{position:sticky;top:0;z-index:20;background:#16181b;padding:10px 14px 9px;display:flex;align-items:flex-end;gap:10px;border-bottom:7px solid transparent;border-image:repeating-linear-gradient(-45deg,var(--yel) 0 10px,#16181b 10px 20px) 7}
+.logo{font:400 26px/1 var(--stencil);letter-spacing:.06em;color:var(--org);text-transform:uppercase}
+.tagline{font:11px/1.25 var(--mono);color:var(--fg2);margin-left:auto;text-align:right}
+#rate{font:11px var(--mono);color:var(--fg2)}
+main{max-width:780px;margin:0 auto;padding:12px}
+.view{display:none}.view.on{display:block}
+h2{font:400 18px/1.1 var(--stencil);letter-spacing:.08em;text-transform:uppercase;color:var(--org);margin:22px 0 8px;display:flex;gap:10px;align-items:center}
+h2::after{content:"";flex:1;height:3px;background:repeating-linear-gradient(90deg,var(--line) 0 8px,transparent 8px 12px)}
+h3{font:700 15px/1.2 var(--body);margin:12px 0 6px}
+p{margin:6px 0 10px}
+.small{font-size:13px}.muted{color:var(--fg2)}.mono{font-family:var(--mono)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.panel{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px;margin:10px 0;background-image:radial-gradient(circle at 8px 8px,#5a616b 2px,transparent 2.6px),radial-gradient(circle at calc(100% - 8px) 8px,#5a616b 2px,transparent 2.6px),radial-gradient(circle at 8px calc(100% - 8px),#5a616b 2px,transparent 2.6px),radial-gradient(circle at calc(100% - 8px) calc(100% - 8px),#5a616b 2px,transparent 2.6px)}
+label.f{display:block}
+label.f>span{display:block;font:700 11px/1.3 var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--fg2);margin-bottom:3px}
+input[type=text],input[type=password],input[type=url],input[type=number],input[type=color],select,textarea{width:100%;min-height:44px;border:1px solid var(--line);border-radius:5px;background:#17191c;padding:8px 10px}
+input[type=color]{padding:3px;height:44px}
+textarea{min-height:110px;resize:vertical;font:13px/1.4 var(--mono)}
+input:focus,select:focus,textarea:focus,button:focus-visible,a:focus-visible{outline:3px solid var(--yel);outline-offset:1px}
+.btn{min-height:44px;border:0;background:var(--org);color:#1a1205;border-radius:5px;padding:8px 14px;font:400 16px/1 var(--stencil);letter-spacing:.07em;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
+.btn.ghost{background:transparent;color:var(--fg);border:1.5px solid var(--line)}
+.btn.sm{min-height:36px;padding:6px 10px;font-size:14px}
+.btn:disabled{opacity:.45;cursor:default}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{min-height:36px;border:1.5px solid var(--line);border-radius:18px;background:var(--panel2);padding:5px 12px;font-size:13px;cursor:pointer}
+.chip.on{border-color:var(--org);background:var(--org);color:#1a1205;font-weight:700}
+.note{border-left:4px solid var(--blu);background:var(--panel2);padding:9px 11px;margin:10px 0;font-size:13.5px;border-radius:0 5px 5px 0}
+.note.warn{border-color:var(--yel)}.note.bad{border-color:var(--red)}.note.ok{border-color:var(--grn)}
+/* reels */
+.reels{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.reel{background:#17191c;border:1.5px solid var(--line);border-radius:6px;padding:9px 10px 8px;min-height:104px;display:flex;flex-direction:column}
+.reel.lock{border-color:var(--yel)}
+.reel .k{font:400 12px/1 var(--stencil);letter-spacing:.12em;color:var(--org);text-transform:uppercase}
+.reel .v{font-weight:700;font-size:15px;margin:5px 0 2px;line-height:1.25}
+.reel .d{font-size:12px;color:var(--fg2);flex:1}
+.reel .ctl{display:flex;gap:6px;margin-top:6px}
+.reel .ctl button{flex:1;min-height:34px;border:1px solid var(--line);background:var(--panel2);border-radius:4px;font-size:12px;cursor:pointer}
+.reel.lock .ctl .lk{background:var(--yel);color:#1a1205;font-weight:700}
+.idea{background:#fff8ec;color:#1d1a14;border-radius:4px;padding:14px 14px 12px;margin:12px 0;position:relative;box-shadow:0 2px 0 #000}
+.idea::before{content:"";position:absolute;left:12px;top:-8px;width:14px;height:14px;border-radius:50%;background:var(--bg);border:3px solid #c8bca6}
+.idea .nm{font:400 22px/1.1 var(--stencil);letter-spacing:.03em;color:#b3420b;text-transform:uppercase;margin-top:4px}
+.idea .pitch{margin:6px 0;font-size:14.5px}
+.idea ul{margin:6px 0;padding-left:18px;font-size:13.5px}
+.idea .lbl{font:700 11px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:#7a6c55;margin-top:8px}
+.idea .btn.ghost{color:#1d1a14;border-color:#c8bca6}
+.verdict{display:inline-block;font:700 12px/1 var(--body);padding:5px 8px;border-radius:3px;margin-top:6px}
+.verdict.fresh{background:#d8f3dc;color:#1b5e20}.verdict.some{background:#fff3c4;color:#7a5a00}.verdict.crowded{background:#ffd9d6;color:#8a1c14}
+/* parts */
+.part{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--org);border-radius:5px;padding:10px 12px;margin:10px 0;cursor:pointer;position:relative}
+.part .nm{font-weight:700;font-size:15.5px;word-break:break-word;padding-right:60px}
+.part .ds{font-size:13.5px;color:var(--fg2);margin:3px 0}
+.part .meta{font:12px var(--mono);color:var(--fg2);display:flex;gap:10px;flex-wrap:wrap;margin-top:5px}
+.part .stars{position:absolute;right:10px;top:9px;font:400 16px var(--stencil);color:var(--yel)}
+.lic{font:700 11px/1 var(--body);padding:3px 6px;border-radius:3px}
+.lic.ok{background:#1f4d2a;color:#b6f2c2}.lic.copy{background:#55430f;color:#ffe08a}.lic.none{background:#5a1d1f;color:#ffc2c4}
+.item{background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:10px 12px;margin:8px 0}
+.item .nm{font-weight:700}
+.steps{list-style:none;padding:0;margin:8px 0}
+.steps li{padding:6px 0 6px 28px;position:relative;font-size:14px}
+.steps li::before{content:"○";position:absolute;left:4px;color:var(--fg2)}
+.steps li.done::before{content:"✓";color:var(--grn);font-weight:700}
+.steps li.run::before{content:"◐";color:var(--yel)}
+.steps li.err::before{content:"✗";color:var(--red);font-weight:700}
+.starter{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.starter button{text-align:left;background:var(--panel2);border:1.5px solid var(--line);border-radius:6px;padding:10px;min-height:86px;cursor:pointer}
+.starter button.on{border-color:var(--org);box-shadow:inset 0 0 0 1px var(--org)}
+.starter b{display:block;font:400 17px/1.1 var(--stencil);letter-spacing:.05em;color:var(--org);text-transform:uppercase;margin-bottom:4px}
+.starter span{font-size:12.5px;color:var(--fg2)}
+.fieldrow{display:flex;gap:6px;align-items:center;padding:5px 0;border-bottom:1px solid var(--line);font-size:13px}
+.fieldrow input[type=checkbox]{width:20px;height:20px;flex:none}
+.fieldrow code{flex:1;word-break:break-all;font-size:12px}
+.fieldrow input[type=text]{min-height:34px;padding:4px 8px;flex:1}
+iframe.prev{width:100%;height:520px;border:2px solid var(--line);border-radius:6px;background:#fff}
+iframe.readme{width:100%;height:420px;border:1px solid var(--line);border-radius:6px;background:#fff}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;background:#16181b;border-top:2px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs button{flex:1;min-height:58px;border:0;background:transparent;color:var(--fg2);font:400 13px/1.1 var(--stencil);letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+nav.tabs button.on{color:var(--org);box-shadow:inset 0 3px 0 var(--org)}
+nav.tabs .i{display:block;font:17px/1 var(--body);margin-bottom:4px}
+.sheet{position:fixed;inset:0;z-index:40;background:var(--bg);overflow:auto}
+.sheet .bar{position:sticky;top:0;z-index:2;background:#16181b;border-bottom:2px solid var(--line);display:flex;align-items:center;gap:8px;padding:8px 10px}
+.sheet .bar .t{flex:1;min-width:0;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sheet .inner{max-width:780px;margin:0 auto;padding:10px 12px 100px}
+details.g{background:var(--panel);border:1px solid var(--line);border-radius:5px;margin:8px 0;padding:0 12px}
+details.g summary{min-height:46px;display:flex;align-items:center;font-weight:700;cursor:pointer;list-style:none}
+details.g summary::after{content:"+";margin-left:auto;font-size:20px;color:var(--org)}
+details.g[open] summary::after{content:"–"}
+details.g ol,details.g ul{margin:0 0 12px;padding-left:20px}
+details.g li{margin:5px 0;font-size:14px}
+code{font:12.5px var(--mono);background:#17191c;border:1px solid var(--line);padding:1px 4px;border-radius:3px;word-break:break-word}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--fg2);border-top-color:transparent;border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:var(--yel);color:#1a1205;font-weight:700;padding:10px 14px;border-radius:4px;font-size:13.5px;z-index:60;max-width:90vw}
+#boxed{background:var(--red);color:#fff;padding:10px 14px;font-size:13.5px}
+#boxed a{color:#fff;font-weight:700}
+@media (max-width:420px){.reels,.starter,.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="boxed" hidden>This preview can't reach GitHub. Open the hosted copy: <a href="https://7itb7.github.io/salvage/" target="_blank" rel="noopener">7itb7.github.io/salvage</a></div>
+<header class="top"><div class="logo">Salvage</div><div class="tagline">free tools from github parts<br><span id="rate"></span></div></header>
+
+<main>
+<!-- ============================ IDEAS ============================ -->
+<section class="view on" id="v-ideas">
+  <p class="small muted">Spin four reels: a free data source, a kind of tool, who it's for, and a twist. Lock what you like, spin the rest. Then check whether it already exists on GitHub before you build it.</p>
+  <div class="row" style="margin-bottom:8px">
+    <select id="srcPool" style="flex:1"><option value="cur">Sources: hand-picked (tested to work in a browser)</option><option value="pa">Sources: 600+ free APIs (public-apis list, no key, browser-friendly)</option><option value="all">Sources: everything on the public-apis list</option></select>
+  </div>
+  <div class="reels" id="reels"></div>
+  <button class="btn" id="spin" style="width:100%;margin-top:10px">Spin</button>
+  <div id="ideaOut"></div>
+  <h2>Data sources</h2>
+  <div class="row"><input type="text" id="srcQ" placeholder="Search sources, e.g. weather, recalls, books" style="flex:1"><select id="srcCat" style="max-width:46%"></select></div>
+  <div id="srcList"></div>
+</section>
+
+<!-- ============================ PARTS ============================ -->
+<section class="view" id="v-parts">
+  <p class="small muted">Search GitHub for open-source tools you can copy and publish for free. Only copy code whose license allows it.</p>
+  <div class="row"><input type="text" id="pQ" placeholder="What are you looking for? e.g. invoice, flashcards, map" style="flex:1"><button class="btn" id="pGo">Search</button></div>
+  <h2>Shelves</h2>
+  <div class="chips" id="pPresets"></div>
+  <div class="grid2" style="margin-top:10px">
+    <label class="f"><span>Minimum stars</span><select id="pStars"><option value="0">Any</option><option value="10">10+</option><option value="50" selected>50+</option><option value="200">200+</option><option value="1000">1,000+</option></select></label>
+    <label class="f"><span>Updated</span><select id="pFresh"><option value="">Any time</option><option value="365">Last year</option><option value="730" selected>Last 2 years</option></select></label>
+    <label class="f"><span>License</span><select id="pLic"><option value="perm" selected>Free to reuse (permissive)</option><option value="any">Any license</option><option value="all">Show everything</option></select></label>
+    <label class="f"><span>Sort</span><select id="pSort"><option value="stars">Most stars</option><option value="updated">Recently updated</option><option value="">Best match</option></select></label>
+  </div>
+  <div id="pOut"></div>
+  <div class="row" style="justify-content:center"><button class="btn ghost" id="pMore" hidden>Load more</button></div>
+</section>
+
+<!-- ============================ BUILD ============================ -->
+<section class="view" id="v-build">
+  <p class="small muted">Pick a starter, fill in the blanks, preview it, then publish. No code and no AI needed. Every starter is a complete single-file app.</p>
+  <div class="starter" id="starters"></div>
+  <div id="bForm"></div>
+  <h2>Look</h2>
+  <div class="grid2">
+    <label class="f"><span>Theme</span><select id="bTheme"></select></label>
+    <label class="f"><span>Accent colour</span><input type="color" id="bAcc"></label>
+  </div>
+  <label class="f" style="margin-top:8px"><span>Footer line (optional)</span><input type="text" id="bFoot" placeholder="e.g. Made by Kepa · data from USGS"></label>
+  <div class="row" style="margin-top:12px"><button class="btn" id="bPrev">Preview</button><button class="btn ghost" id="bDl">Download files</button></div>
+  <div id="bPrevBox"></div>
+  <h2>Publish free</h2>
+  <div class="panel">
+    <div class="grid2">
+      <label class="f"><span>Put it in</span><select id="bOwner"><option value="">Unlock your token in Setup</option></select></label>
+      <label class="f"><span>Repo name (becomes the web address)</span><input type="text" id="bRepo" placeholder="my-tool"></label>
+    </div>
+    <label class="f" style="margin-top:8px"><span>Short description</span><input type="text" id="bDesc" placeholder="One line about what it does"></label>
+    <label class="row small" style="margin-top:8px;gap:8px;flex-wrap:nowrap"><input type="checkbox" id="bMit" checked style="width:20px;height:20px"> Add an MIT license (lets others reuse it, keeps your name on it)</label>
+    <button class="btn" id="bPub" style="width:100%;margin-top:10px">Publish to GitHub Pages</button>
+    <ul class="steps" id="bSteps"></ul>
+  </div>
+</section>
+
+<!-- ============================ MINE ============================ -->
+<section class="view" id="v-mine">
+  <h2>Saved ideas</h2><div id="mIdeas"></div>
+  <h2>Saved parts</h2><div id="mParts"></div>
+  <h2>My repos</h2>
+  <div class="row"><button class="btn ghost sm" id="mLoad">Load my repos</button><span class="small muted" id="mMsg"></span></div>
+  <div id="mRepos"></div>
+  <h2>Backup</h2>
+  <div class="row"><button class="btn ghost sm" id="bkOut">Download backup</button><label class="btn ghost sm">Restore<input type="file" id="bkIn" accept=".json" hidden></label></div>
+</section>
+
+<!-- ============================ SETUP ============================ -->
+<section class="view" id="v-setup">
+  <h2>GitHub token</h2>
+  <div class="panel">
+    <div id="tokLocked" hidden>
+      <p class="small">A saved token is locked on this device.</p>
+      <div class="row"><input type="password" id="tokPass" placeholder="Passphrase" style="flex:1"><button class="btn" id="tokUnlock">Unlock</button></div>
+      <button class="btn ghost sm" id="tokForget" style="margin-top:8px">Forget saved token</button>
+    </div>
+    <div id="tokNew">
+      <label class="f"><span>Personal access token (classic)</span><input type="password" id="tokIn" autocomplete="off" placeholder="ghp_…"></label>
+      <label class="f" style="margin-top:8px"><span>Passphrase to lock it on this device (optional)</span><input type="password" id="tokNewPass" placeholder="Leave empty to keep it only until you close the tab"></label>
+      <button class="btn" id="tokSave" style="margin-top:8px">Use token</button>
+    </div>
+    <p class="small" id="tokMsg"></p>
+    <div id="ownersBox" hidden>
+      <div class="grid2">
+        <label class="f"><span>Your own tools go to</span><select id="ownOwner"></select></label>
+        <label class="f"><span>Copies of other people's code go to</span><select id="copyOwner"></select></label>
+      </div>
+      <p class="small muted" id="ownerWarn"></p>
+    </div>
+  </div>
+
+  <details class="g"><summary>Make the token (5 minutes)</summary><ol>
+    <li>On GitHub: profile picture → <b>Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token (classic)</b>.</li>
+    <li>Note: <code>salvage</code>. Expiration: <b>90 days</b>.</li>
+    <li>Tick <b>repo</b>, <b>workflow</b> and <b>read:org</b>. Nothing else.</li>
+    <li>Generate, copy it, paste it above, and set a passphrase so it's stored scrambled.</li>
+    <li>When it expires, make a new one the same way.</li>
+  </ol><p class="small muted">Why classic? Creating Pages sites needs the "repo" scope, and a classic token can also publish into your organization.</p></details>
+
+  <details class="g" open><summary>Important: keep other people's code in a separate yard</summary>
+    <p class="small">Everything published at <b>7itb7.github.io</b> shares one browser "address". Code you copy from strangers and publish there could read the keys your other apps save in the browser (for example your Google key in Tourniquet). Fix, free and one-time:</p>
+    <ol><li>On GitHub: <b>+ → New organization → Free</b>. Name it something like <code>7itb7-yard</code>.</li><li>Come back, re-enter the token, and choose that organization under "Copies of other people's code go to".</li><li>Copies then live at <b>7itb7-yard.github.io</b>, a separate address that can't see your own apps' data.</li></ol>
+  </details>
+
+  <details class="g"><summary>The free stack (what costs nothing)</summary><ul>
+    <li><b>GitHub Pages</b>: free hosting for public repos. Sites up to 1 GB, soft limit of 100 GB of traffic a month.</li>
+    <li><b>GitHub Actions</b>: free robots for public repos. Your robot trackers run on a schedule and save their data back into the repo.</li>
+    <li><b>github.dev</b>: a free code editor in the browser. Open any repo and press the <code>.</code> key, or use the Edit button in Mine.</li>
+    <li><b>raw.githubusercontent.com</b>: any file in a public repo can be read by any web app, so a repo doubles as a free database.</li>
+  </ul></details>
+
+  <details class="g"><summary>Rules that matter</summary><ul>
+    <li><b>Licenses:</b> MIT, Apache, BSD, ISC and similar: copy, change and even sell, as long as you keep their license file. GPL/AGPL: allowed, but your version must stay open source under the same license. <b>No license = no permission</b>, look but don't copy.</li>
+    <li><b>Pages is not a store.</b> GitHub's rules say Pages can't be used as free hosting to run an online business, e-commerce site or paid software service. Free tools, portfolios and lead-generation pages are fine; paid apps need other hosting.</li>
+    <li><b>Robots:</b> GitHub turns off scheduled robots in public repos after 60 days with no activity. The robot starter commits data on every run, which keeps it active.</li>
+    <li><b>Tokens:</b> never paste your token into a page you didn't build, and never commit it to a repo.</li>
+  </ul></details>
+</section>
+</main>
+
+<nav class="tabs" id="tabs">
+  <button data-go="ideas" class="on"><span class="i">⚙</span>Ideas</button>
+  <button data-go="parts"><span class="i">⚒</span>Parts</button>
+  <button data-go="build"><span class="i">⛏</span>Build</button>
+  <button data-go="mine"><span class="i">▤</span>Mine</button>
+  <button data-go="setup"><span class="i">⚿</span>Setup</button>
+</nav>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="bar"><button class="btn ghost sm" id="shClose">← Back</button><div class="t" id="shTitle"></div></div>
+  <div class="inner" id="shBody"></div>
+</div>
+
+<!-- ===================== app templates (generated tools) ===================== -->
+<script type="text/plain" id="tpl-viewer"><!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>__TITLE__</title>
+<style>:root{__THEME__}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 var(--font)}
+header{padding:16px;background:var(--acc);color:var(--accfg)}h1{margin:0;font-size:22px}.sub{opacity:.85;font-size:13px;margin-top:2px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;padding:10px 12px;position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--line);z-index:2}
+input,select,button{font:inherit;min-height:42px;border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--card);color:var(--fg)}
+input{flex:1;min-width:140px}button{cursor:pointer}a{color:var(--acc)}
+main{padding:12px;max-width:900px;margin:0 auto}.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin:10px 0;display:flex;gap:12px}
+.card img{width:84px;height:84px;object-fit:cover;border-radius:8px;flex:none}.t{font-weight:700;font-size:16px;margin-bottom:3px}.kv{font-size:13px;word-break:break-word}.kv b{opacity:.65;font-weight:600}
+.star{margin-left:auto;background:none;border:0;font-size:22px;min-height:auto;align-self:flex-start;padding:0 4px}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13px}td,th{border-bottom:1px solid var(--line);padding:6px;text-align:left;vertical-align:top}
+.muted{opacity:.7;font-size:13px}footer{padding:20px;text-align:center;font-size:12px;opacity:.6}</style></head><body>
+<header><h1 id="h"></h1><div class="sub" id="sub"></div></header>
+<div class="bar"><input id="q" placeholder="Search" aria-label="Search"><select id="sort" aria-label="Sort"></select><button id="view">Table</button><button id="fav">☆ Favorites</button><button id="csv">CSV</button></div>
+<main><div class="muted" id="st">Loading…</div><div id="out"></div></main><footer id="ft"></footer>
+<script>
+const CFG=__CFG__;
+const $=s=>document.querySelector(s),esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const get=(o,p)=>p?String(p).split('.').reduce((a,k)=>a==null?a:a[k],o):o;
+const ls={g(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},s(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const F=CFG.fields.filter(f=>f.show);let rows=[],table=false,favOnly=false,favs=new Set(ls.g('fav:'+CFG.title,[]));
+$('#h').textContent=CFG.title;$('#sub').textContent=CFG.sub||'';$('#ft').textContent=CFG.footer||'';document.title=CFG.title;
+$('#sort').innerHTML='<option value="">Sort: as loaded</option>'+F.map(f=>'<option value="'+esc(f.key)+'">Sort: '+esc(f.label)+'</option>').join('');
+const label=k=>{const f=CFG.fields.find(x=>x.key===k);return f?f.label:k};
+function fmt(v){if(v==null)return '';if(typeof v==='number'){if(v>9e11&&v<1e13)return new Date(v).toLocaleString();return v.toLocaleString()}const s=String(v);if(/^\d{4}-\d\d-\d\dT\d/.test(s)){const d=new Date(s);if(!isNaN(d))return d.toLocaleString()}return s.length>260?s.slice(0,260)+'…':s}
+const idOf=r=>String(get(r,CFG.titleField)??'')+'|'+String(get(r,F[0]&&F[0].key)??'');
+const link=(r,h)=>{const u=CFG.linkField&&get(r,CFG.linkField);return u&&/^https?:/.test(u)?'<a href="'+esc(u)+'" target="_blank" rel="noopener">'+h+'</a>':h};
+function draw(){const q=$('#q').value.toLowerCase();let list=rows.filter(r=>!q||[CFG.titleField,...F.map(f=>f.key)].some(k=>String(get(r,k)??'').toLowerCase().includes(q)));
+ if(favOnly)list=list.filter(r=>favs.has(idOf(r)));const s=$('#sort').value;
+ if(s)list=list.slice().sort((a,b)=>{const x=get(a,s),y=get(b,s);return typeof x==='number'&&typeof y==='number'?y-x:String(x??'').localeCompare(String(y??''))});
+ $('#st').textContent=list.length+' of '+rows.length+' shown · loaded '+new Date(loadedAt).toLocaleTimeString();
+ if(table){$('#out').innerHTML='<div class="tw"><table><tr><th>'+esc(label(CFG.titleField))+'</th>'+F.map(f=>'<th>'+esc(f.label)+'</th>').join('')+'</tr>'+list.map(r=>'<tr><td>'+link(r,esc(fmt(get(r,CFG.titleField))))+'</td>'+F.map(f=>'<td>'+esc(fmt(get(r,f.key)))+'</td>').join('')+'</tr>').join('')+'</table></div>';return}
+ $('#out').innerHTML=list.map(r=>{const id=idOf(r),img=CFG.imageField&&get(r,CFG.imageField);return '<div class="card">'+(img&&/^https?:/.test(img)?'<img src="'+esc(img)+'" alt="" loading="lazy">':'')+'<div style="flex:1;min-width:0"><div class="t">'+link(r,esc(fmt(get(r,CFG.titleField))||'(untitled)'))+'</div>'+F.map(f=>{const v=fmt(get(r,f.key));return v!==''?'<div class="kv"><b>'+esc(f.label)+':</b> '+esc(v)+'</div>':''}).join('')+'</div><button class="star" data-id="'+esc(id)+'" aria-label="Favorite">'+(favs.has(id)?'★':'☆')+'</button></div>'}).join('')||'<p class="muted">Nothing matches.</p>'}
+let loadedAt=Date.now();
+$('#out').onclick=e=>{const b=e.target.closest('.star');if(!b)return;const id=b.dataset.id;favs.has(id)?favs.delete(id):favs.add(id);ls.s('fav:'+CFG.title,[...favs]);draw()};
+$('#q').oninput=draw;$('#sort').onchange=draw;$('#view').onclick=()=>{table=!table;$('#view').textContent=table?'Cards':'Table';draw()};
+$('#fav').onclick=()=>{favOnly=!favOnly;$('#fav').textContent=favOnly?'★ Favorites':'☆ Favorites';draw()};
+$('#csv').onclick=()=>{const cols=[CFG.titleField,...F.map(f=>f.key)];const L=[cols.map(c=>'"'+label(c).replace(/"/g,'""')+'"').join(',')].concat(rows.map(r=>cols.map(c=>'"'+String(get(r,c)??'').replace(/"/g,'""')+'"').join(',')));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([L.join('\n')],{type:'text/csv'}));a.download=(CFG.title||'data').replace(/[^\w-]+/g,'-')+'.csv';document.body.appendChild(a);a.click();a.remove()};
+async function load(){try{const r=await fetch(CFG.url,{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);const j=await r.json();const a=get(j,CFG.path);rows=Array.isArray(a)?a:[];loadedAt=Date.now();draw()}catch(e){$('#st').textContent='Could not load the data: '+e.message}}
+load();if(CFG.refreshMin>0)setInterval(load,CFG.refreshMin*60000);
+<\/script></body></html></script>
+
+<script type="text/plain" id="tpl-robot"><!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>__TITLE__</title>
+<style>:root{__THEME__}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 var(--font)}
+header{padding:16px;background:var(--acc);color:var(--accfg)}h1{margin:0;font-size:22px}.sub{opacity:.85;font-size:13px;margin-top:2px}
+main{padding:12px;max-width:900px;margin:0 auto}.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin:10px 0}
+.big{font-size:34px;font-weight:800;line-height:1.1}.muted{opacity:.7;font-size:13px}.up{color:#2e9d57}.down{color:#d64545}
+svg{width:100%;height:200px;display:block}button{font:inherit;min-height:42px;border:1px solid var(--line);border-radius:8px;padding:6px 12px;background:var(--card);color:var(--fg);cursor:pointer}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13px}td,th{border-bottom:1px solid var(--line);padding:6px;text-align:left;vertical-align:top;word-break:break-word}footer{padding:20px;text-align:center;font-size:12px;opacity:.6}</style></head><body>
+<header><h1 id="h"></h1><div class="sub" id="sub"></div></header>
+<main><div class="card"><div class="muted" id="lbl"></div><div class="big" id="now">…</div><div id="chg" class="muted"></div></div>
+<div class="card"><svg id="chart" viewBox="0 0 600 200" preserveAspectRatio="none" aria-label="History chart"></svg><div class="muted" id="range"></div></div>
+<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>History</b><button id="csv">Download CSV</button></div><div class="tw" id="tbl"></div></div></main><footer id="ft"></footer>
+<script>
+const CFG=__CFG__;
+const $=s=>document.querySelector(s),esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+$('#h').textContent=CFG.title;$('#sub').textContent=CFG.sub||'';$('#ft').textContent=CFG.footer||'';$('#lbl').textContent=CFG.label||'Latest value';document.title=CFG.title;
+let H=[];
+const num=v=>typeof v==='number'?v:(typeof v==='string'&&v.trim()!==''&&!isNaN(+v)?+v:null);
+const show=v=>v==null?'—':typeof v==='object'?JSON.stringify(v).slice(0,300):typeof v==='number'?v.toLocaleString():String(v);
+async function load(){const urls=[];if(CFG.owner)urls.push('https://raw.githubusercontent.com/'+CFG.owner+'/'+CFG.repo+'/'+(CFG.branch||'main')+'/data/history.json?t='+Date.now());urls.push('data/history.json?t='+Date.now());
+ for(const u of urls){try{const r=await fetch(u,{cache:'no-store'});if(r.ok){const j=await r.json();if(Array.isArray(j))return j}}catch(e){}}return null}
+function draw(){if(!H.length){$('#now').textContent='No data yet';$('#chg').innerHTML='The robot has not run yet. On GitHub open this repo → <b>Actions</b> → <b>robot</b> → <b>Run workflow</b>.';return}
+ const last=H[H.length-1];$('#now').textContent=show(last.v)+(CFG.unit?' '+CFG.unit:'');
+ const pts=H.map(h=>({t:new Date(h.t),n:num(h.v)})).filter(p=>p.n!=null);
+ if(pts.length>=2){const a=pts[pts.length-2].n,b=pts[pts.length-1].n,f=pts[0].n;const d=b-a,df=b-f;$('#chg').innerHTML='<span class="'+(d>=0?'up':'down')+'">'+(d>=0?'▲':'▼')+' '+Math.abs(d).toLocaleString()+'</span> since last check · '+(df>=0?'+':'')+df.toLocaleString()+' since '+pts[0].t.toLocaleDateString()+' · checked '+new Date(last.t).toLocaleString();
+  const xs=pts.map(p=>+p.t),ys=pts.map(p=>p.n),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys),X=x=>10+(x-x0)/((x1-x0)||1)*580,Y=y=>190-(y-y0)/((y1-y0)||1)*170;
+  $('#chart').innerHTML='<polyline fill="none" stroke="var(--acc)" stroke-width="3" vector-effect="non-scaling-stroke" points="'+pts.map(p=>X(+p.t).toFixed(1)+','+Y(p.n).toFixed(1)).join(' ')+'"/>';
+  $('#range').textContent='Low '+y0.toLocaleString()+' · High '+y1.toLocaleString()+' · '+pts.length+' readings'}
+ else{$('#chg').textContent='Checked '+new Date(last.t).toLocaleString();$('#chart').style.display='none'}
+ $('#tbl').innerHTML='<table><tr><th>When</th><th>Value</th></tr>'+H.slice(-60).reverse().map(h=>'<tr><td>'+esc(new Date(h.t).toLocaleString())+'</td><td>'+esc(show(h.v))+'</td></tr>').join('')+'</table>'}
+$('#csv').onclick=()=>{const L=['time,value'].concat(H.map(h=>h.t+',"'+String(typeof h.v==='object'?JSON.stringify(h.v):h.v).replace(/"/g,'""')+'"'));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([L.join('\n')],{type:'text/csv'}));a.download='history.csv';document.body.appendChild(a);a.click();a.remove()};
+load().then(j=>{H=j||[];draw()});
+<\/script></body></html></script>
+
+<script type="text/plain" id="tpl-directory"><!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>__TITLE__</title>
+<style>:root{__THEME__}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 var(--font)}
+header{padding:16px;background:var(--acc);color:var(--accfg)}h1{margin:0;font-size:22px}.sub{opacity:.85;font-size:13px;margin-top:2px}
+.bar{padding:10px 12px;position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--line);z-index:2}
+input{font:inherit;width:100%;min-height:44px;border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--card);color:var(--fg)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.chip{font:inherit;font-size:13px;min-height:36px;border:1px solid var(--line);border-radius:18px;padding:4px 12px;background:var(--card);color:var(--fg);cursor:pointer}.chip.on{background:var(--acc);color:var(--accfg);border-color:var(--acc)}
+main{padding:12px;max-width:900px;margin:0 auto}.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin:10px 0}.t{font-weight:700;font-size:16px;margin-bottom:3px}.kv{font-size:13px;word-break:break-word}.kv b{opacity:.65;font-weight:600}a{color:var(--acc)}
+.muted{opacity:.7;font-size:13px}footer{padding:20px;text-align:center;font-size:12px;opacity:.6}</style></head><body>
+<header><h1 id="h"></h1><div class="sub" id="sub"></div></header>
+<div class="bar"><input id="q" placeholder="Search" aria-label="Search"><div class="chips" id="cats"></div></div>
+<main><div class="muted" id="st"></div><div id="out"></div></main><footer id="ft"></footer>
+<script>
+const CFG=__CFG__;
+const $=s=>document.querySelector(s),esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+$('#h').textContent=CFG.title;$('#sub').textContent=CFG.sub||'';$('#ft').textContent=CFG.footer||'';document.title=CFG.title;
+const C=CFG.cols,ti=C.indexOf(CFG.titleCol),ci=C.indexOf(CFG.catCol),li=C.indexOf(CFG.linkCol);let cat='';
+const cats=ci<0?[]:[...new Set(CFG.rows.map(r=>r[ci]).filter(Boolean))].sort();
+$('#cats').innerHTML=cats.length?['<button class="chip on" data-c="">All</button>'].concat(cats.map(c=>'<button class="chip" data-c="'+esc(c)+'">'+esc(c)+'</button>')).join(''):'';
+$('#cats').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;cat=b.dataset.c;[...document.querySelectorAll('.chip')].forEach(x=>x.classList.toggle('on',x===b));draw()};
+function draw(){const q=$('#q').value.toLowerCase();const list=CFG.rows.filter(r=>(!cat||r[ci]===cat)&&(!q||r.join(' ').toLowerCase().includes(q)));
+ $('#st').textContent=list.length+' of '+CFG.rows.length;
+ $('#out').innerHTML=list.map(r=>{const u=li>=0&&/^https?:/.test(r[li]||'')?r[li]:'';const t=esc(r[ti]||'(untitled)');return '<div class="card"><div class="t">'+(u?'<a href="'+esc(u)+'" target="_blank" rel="noopener">'+t+'</a>':t)+'</div>'+C.map((c,i)=>i===ti||i===li||!r[i]?'':'<div class="kv"><b>'+esc(c)+':</b> '+(/^https?:\/\//.test(r[i])?'<a href="'+esc(r[i])+'" target="_blank" rel="noopener">'+esc(r[i])+'</a>':/^[\d\s()+.-]{10,}$/.test(r[i])?'<a href="tel:'+esc(r[i].replace(/[^\d+]/g,''))+'">'+esc(r[i])+'</a>':esc(r[i]))+'</div>').join('')+'</div>'}).join('')||'<p class="muted">Nothing matches.</p>'}
+$('#q').oninput=draw;draw();
+<\/script></body></html></script>
+
+<script type="text/plain" id="tpl-tracker"><!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>__TITLE__</title>
+<style>:root{__THEME__}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 var(--font)}
+header{padding:16px;background:var(--acc);color:var(--accfg)}h1{margin:0;font-size:22px}.sub{opacity:.85;font-size:13px;margin-top:2px}
+main{padding:12px;max-width:760px;margin:0 auto}.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin:10px 0}
+label{display:block;margin:6px 0;font-size:12px;font-weight:700;opacity:.75;text-transform:uppercase;letter-spacing:.05em}
+input,select,textarea,button{font:inherit;width:100%;min-height:44px;border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--bg);color:var(--fg)}
+button{cursor:pointer;width:auto;padding:6px 14px}.go{background:var(--acc);color:var(--accfg);border-color:var(--acc);width:100%;margin-top:8px}
+.tot{display:flex;gap:8px;flex-wrap:wrap}.tot div{flex:1;min-width:120px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px}.tot b{display:block;font-size:22px}
+.e{display:flex;gap:8px;align-items:flex-start}.e .x{margin-left:auto;display:flex;gap:6px}.kv{font-size:13px}.kv b{opacity:.65}.muted{opacity:.7;font-size:13px}
+.tools{display:flex;gap:8px;flex-wrap:wrap}footer{padding:20px;text-align:center;font-size:12px;opacity:.6}</style></head><body>
+<header><h1 id="h"></h1><div class="sub" id="sub"></div></header>
+<main><div class="card"><form id="f"></form></div><div class="tot" id="tot"></div><div id="list"></div>
+<div class="card tools"><button id="csv">Download CSV</button><button id="bk">Backup</button><label style="margin:0"><span style="display:inline-block;padding:10px 14px;border:1px solid var(--line);border-radius:8px;cursor:pointer;text-transform:none;font-weight:400;letter-spacing:0;opacity:1">Restore</span><input type="file" id="rs" accept=".json" hidden></label></div></main><footer id="ft"></footer>
+<script>
+const CFG=__CFG__;
+const $=s=>document.querySelector(s),esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const KEY='log:'+CFG.title;const ls={g(d){try{const v=localStorage.getItem(KEY);return v?JSON.parse(v):d}catch(e){return d}},s(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){alert('Could not save in this browser')}}};
+let E=ls.g([]),edit=null;$('#h').textContent=CFG.title;$('#sub').textContent=CFG.sub||'';$('#ft').textContent=CFG.footer||'';document.title=CFG.title;
+const F=CFG.fields;const inp=(f,i)=>f.type==='select'?'<select name="f'+i+'">'+f.options.map(o=>'<option>'+esc(o)+'</option>').join('')+'</select>':f.type==='note'?'<textarea name="f'+i+'"></textarea>':'<input name="f'+i+'" type="'+(f.type==='number'?'number" step="any" inputmode="decimal':f.type==='date'?'date':'text')+'">';
+$('#f').innerHTML=F.map((f,i)=>'<label>'+esc(f.name)+'</label>'+inp(f,i)).join('')+'<button class="go" type="submit" id="sv">Add entry</button>';
+function reset(){$('#f').reset();F.forEach((f,i)=>{if(f.type==='date')$('#f').elements['f'+i].value=new Date().toISOString().slice(0,10)});edit=null;$('#sv').textContent='Add entry'}
+$('#f').onsubmit=e=>{e.preventDefault();const v=F.map((f,i)=>{const x=$('#f').elements['f'+i].value;return f.type==='number'?(x===''?null:+x):x});if(edit!=null)E[edit].v=v;else E.push({at:new Date().toISOString(),v});ls.s(E);reset();draw()};
+function draw(){const nums=F.map((f,i)=>f.type==='number'?i:-1).filter(i=>i>=0);const m=new Date().toISOString().slice(0,7);
+ $('#tot').innerHTML='<div><span class="muted">Entries</span><b>'+E.length+'</b></div>'+nums.map(i=>{const all=E.reduce((s,e)=>s+(+e.v[i]||0),0),mo=E.filter(e=>e.at.slice(0,7)===m).reduce((s,e)=>s+(+e.v[i]||0),0);return '<div><span class="muted">'+esc(F[i].name)+' total</span><b>'+all.toLocaleString()+'</b><span class="muted">this month '+mo.toLocaleString()+'</span></div>'}).join('');
+ $('#list').innerHTML=E.map((e,k)=>({e,k})).reverse().map(({e,k})=>'<div class="card e"><div>'+F.map((f,i)=>e.v[i]!==''&&e.v[i]!=null?'<div class="kv"><b>'+esc(f.name)+':</b> '+esc(e.v[i])+'</div>':'').join('')+'<div class="muted">'+new Date(e.at).toLocaleString()+'</div></div><div class="x"><button data-ed="'+k+'">Edit</button><button data-del="'+k+'">✕</button></div></div>').join('')||'<p class="muted">No entries yet.</p>'}
+$('#list').onclick=e=>{const t=e.target;if(t.dataset.del!=null&&confirm('Delete this entry?')){E.splice(+t.dataset.del,1);ls.s(E);draw()}if(t.dataset.ed!=null){edit=+t.dataset.ed;F.forEach((f,i)=>{$('#f').elements['f'+i].value=E[edit].v[i]??''});$('#sv').textContent='Save changes';scrollTo(0,0)}};
+const dl=(name,txt,type)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove()};
+$('#csv').onclick=()=>dl('entries.csv',['time,'+F.map(f=>'"'+f.name.replace(/"/g,'""')+'"').join(',')].concat(E.map(e=>e.at+','+e.v.map(x=>'"'+String(x??'').replace(/"/g,'""')+'"').join(','))).join('\n'),'text/csv');
+$('#bk').onclick=()=>dl('backup.json',JSON.stringify(E),'application/json');
+$('#rs').onchange=async e=>{try{const j=JSON.parse(await e.target.files[0].text());if(Array.isArray(j)){E=j;ls.s(E);draw()}}catch(_){alert('Not a backup file')}};
+reset();draw();
+<\/script></body></html></script>
+
+<script type="text/plain" id="tpl-links"><!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>__TITLE__</title>
+<style>:root{__THEME__}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 var(--font);min-height:100vh;display:flex;justify-content:center}
+.wrap{width:100%;max-width:520px;padding:28px 16px 40px;text-align:center}.logo{width:84px;height:84px;border-radius:50%;background:var(--acc);color:var(--accfg);display:grid;place-items:center;font-size:34px;font-weight:800;margin:0 auto 12px}
+h1{margin:0 0 6px;font-size:26px}.bio{opacity:.85;margin:0 0 18px}a.b{display:block;background:var(--card);border:1px solid var(--line);color:var(--fg);text-decoration:none;border-radius:12px;padding:14px;margin:10px 0;font-weight:700}
+a.b.p{background:var(--acc);color:var(--accfg);border-color:var(--acc)}.info{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:16px;font-size:14px;text-align:left;white-space:pre-line}footer{margin-top:24px;font-size:12px;opacity:.6}</style></head><body>
+<div class="wrap"><div class="logo" id="lg"></div><h1 id="h"></h1><p class="bio" id="bio"></p><div id="links"></div><div class="info" id="info" hidden></div><footer id="ft"></footer></div>
+<script>
+const CFG=__CFG__;
+const $=s=>document.querySelector(s),esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+$('#h').textContent=CFG.title;$('#bio').textContent=CFG.bio||'';$('#lg').textContent=(CFG.title||'?').trim().charAt(0).toUpperCase();$('#ft').textContent=CFG.footer||'';document.title=CFG.title;
+const L=[];if(CFG.phone)L.push({label:'Call '+CFG.phone,url:'tel:'+CFG.phone.replace(/[^\d+]/g,''),p:1});if(CFG.email)L.push({label:'Email',url:'mailto:'+CFG.email});
+(CFG.links||[]).forEach(l=>L.push(l));if(CFG.phone||CFG.email)L.push({label:'Save contact',url:'#vcf'});
+$('#links').innerHTML=L.map(l=>'<a class="b'+(l.p?' p':'')+'" href="'+esc(l.url)+'"'+(/^https?:/.test(l.url)?' target="_blank" rel="noopener"':'')+'>'+esc(l.label)+'</a>').join('');
+if(CFG.info){$('#info').hidden=false;$('#info').textContent=CFG.info}
+$('#links').onclick=e=>{const a=e.target.closest('a[href="#vcf"]');if(!a)return;e.preventDefault();const v=['BEGIN:VCARD','VERSION:3.0','FN:'+CFG.title,CFG.phone?'TEL:'+CFG.phone:'',CFG.email?'EMAIL:'+CFG.email:'','URL:'+location.href,'END:VCARD'].filter(Boolean).join('\n');const b=document.createElement('a');b.href=URL.createObjectURL(new Blob([v],{type:'text/vcard'}));b.download=(CFG.title||'contact')+'.vcf';document.body.appendChild(b);b.click();b.remove()};
+<\/script></body></html></script>
+
+<script>
+'use strict';
+/* ====================== helpers ====================== */
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+const setHash=h=>{try{history.replaceState(null,'','#'+h)}catch(e){}};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+const slug=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60)||'my-tool';
+const fmtN=n=>Number(n||0).toLocaleString('en-US');
+const ago=iso=>{const d=(Date.now()-new Date(iso))/864e5;return d<1?'today':d<31?Math.round(d)+'d ago':d<365?Math.round(d/30)+'mo ago':(d/365).toFixed(1)+'y ago'};
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2800)}
+function b64(str){const b=new TextEncoder().encode(str);let s='';for(let i=0;i<b.length;i+=0x8000)s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(s)}
+const u8b64=u=>btoa(String.fromCharCode(...u)),b64u8=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+function dl(name,txt,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:type||'text/plain'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+if(window.origin==='null'||/claudeusercontent|claude\.ai|claude\.site/.test(location.hostname))$('#boxed').hidden=false;
+
+/* ====================== state ====================== */
+let TOKEN='',ME=null,ORGS=[];
+let S=Object.assign({own:'',copy:''},store.get('sv.set',{}));
+const saveS=()=>store.set('sv.set',S);
+let ideas=store.get('sv.ideas',[]),parts=store.get('sv.parts',[]);
+const saveIdeas=()=>store.set('sv.ideas',ideas),saveParts=()=>store.set('sv.parts',parts);
+
+/* ====================== tabs ====================== */
+function go(v){$$('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));$$('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.go===v));if(v==='mine')drawMine();window.scrollTo(0,0);setHash(v)}
+document.addEventListener('click',e=>{const g=e.target.closest('[data-go]');if(g){e.preventDefault();go(g.dataset.go)}});
+
+/* ====================== GitHub API ====================== */
+function ghErr(status,j){const m=(j&&j.message)||'';
+  if(status===401)return 'GitHub rejected the token (expired or mistyped). Make a new one in Setup.';
+  if(status===403&&/rate limit/i.test(m))return 'GitHub rate limit reached. Wait a bit'+(TOKEN?'':', or add a token in Setup for 5,000 requests an hour')+'.';
+  if(status===403)return 'Not allowed: '+m+'. The token may be missing the repo or workflow box.';
+  if(status===404)return 'Not found'+(TOKEN?'':' (or it needs a token)')+'.';
+  if(status===422)return 'GitHub refused: '+m+(j&&j.errors?' — '+j.errors.map(e=>e.message||e.code).join('; '):'');
+  return 'GitHub error '+status+(m?': '+m:'')}
+async function gh(path,opt){opt=opt||{};const h={'Accept':opt.accept||'application/vnd.github+json'};if(TOKEN)h.Authorization='Bearer '+TOKEN;let body;if(opt.body!==undefined){body=JSON.stringify(opt.body);h['Content-Type']='application/json'}
+  const r=await fetch(path.startsWith('http')?path:'https://api.github.com'+path,{method:opt.method||'GET',headers:h,body,cache:'no-store'});
+  const rem=r.headers.get('x-ratelimit-remaining'),lim=r.headers.get('x-ratelimit-limit');if(rem!=null)$('#rate').textContent='GitHub: '+rem+'/'+lim+' left';
+  const txt=await r.text();let j=null;try{j=txt?JSON.parse(txt):null}catch(e){j=txt}
+  if(!r.ok){const e=new Error(ghErr(r.status,j));e.status=r.status;e.body=j;throw e}return j}
+const rawURL=(full,branch,path)=>'https://raw.githubusercontent.com/'+full+'/'+branch+'/'+path;
+async function waitFor(fn,tries,ms){for(let i=0;i<tries;i++){try{const v=await fn();if(v)return v}catch(e){}await sleep(ms)}return null}
+async function putFile(owner,repo,path,content,msg,branch){let sha;try{const ex=await gh('/repos/'+owner+'/'+repo+'/contents/'+path+(branch?'?ref='+branch:''));sha=ex.sha}catch(e){if(e.status!==404)throw e}
+  const body={message:msg,content:b64(content)};if(sha)body.sha=sha;if(branch)body.branch=branch;
+  for(let i=0;i<4;i++){try{return await gh('/repos/'+owner+'/'+repo+'/contents/'+path,{method:'PUT',body})}catch(e){if(i===3||!(e.status===409||e.status===404||e.status>=500))throw e;await sleep(2500)}}}
+async function enablePages(owner,repo,branch,path){try{await gh('/repos/'+owner+'/'+repo+'/pages',{method:'POST',body:{source:{branch,path}}})}catch(e){if(e.status===409)return;throw e}}
+async function waitPages(owner,repo,tick){for(let i=0;i<45;i++){try{const p=await gh('/repos/'+owner+'/'+repo+'/pages');tick&&tick(p.status,i);if(p.status==='built')return p;if(p.status==='errored')throw new Error('GitHub could not build the site. Open the repo\'s Actions tab to see why.')}catch(e){if(e.status!==404)throw e}await sleep(6000)}return {html_url:'https://'+owner.toLowerCase()+'.github.io/'+repo+'/',pending:true}}
+
+/* ====================== token (encrypted at rest) ====================== */
+async function kdf(pass,salt){const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(pass),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},k,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+async function lockToken(tok,pass){const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));const c=await crypto.subtle.encrypt({name:'AES-GCM',iv},await kdf(pass,salt),new TextEncoder().encode(tok));store.set('sv.tok',{s:u8b64(salt),i:u8b64(iv),c:u8b64(new Uint8Array(c))})}
+async function unlockToken(pass){const o=store.get('sv.tok',null);if(!o)throw new Error('No saved token');const p=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64u8(o.i)},await kdf(pass,b64u8(o.s)),b64u8(o.c));return new TextDecoder().decode(p)}
+function drawTokState(){const saved=!!store.get('sv.tok',null);$('#tokLocked').hidden=!saved||!!TOKEN;$('#tokNew').hidden=saved&&!TOKEN}
+async function useToken(tok){TOKEN=tok.trim();$('#tokMsg').innerHTML='<span class="spin"></span> Checking token…';
+  try{ME=await gh('/user');try{ORGS=(await gh('/user/orgs')).map(o=>o.login)}catch(e){ORGS=[]}
+    $('#tokMsg').innerHTML='✓ Signed in as <b>'+esc(ME.login)+'</b>'+(ORGS.length?' · organizations: '+ORGS.map(esc).join(', '):'');drawOwners();drawTokState();return true}
+  catch(e){TOKEN='';ME=null;$('#tokMsg').textContent='✗ '+e.message;return false}}
+function drawOwners(){if(!ME)return;const all=[ME.login,...ORGS];if(!all.includes(S.own))S.own=ME.login;if(!all.includes(S.copy))S.copy=ORGS[0]||ME.login;saveS();
+  const opts=v=>all.map(o=>'<option'+(o===v?' selected':'')+'>'+esc(o)+'</option>').join('');$('#ownOwner').innerHTML=opts(S.own);$('#copyOwner').innerHTML=opts(S.copy);$('#bOwner').innerHTML=opts(S.own);$('#ownersBox').hidden=false;
+  $('#ownerWarn').innerHTML=S.copy===S.own?'⚠ Copies of other people\'s code will share an address with your own apps. Make a free organization (see below) and pick it here.':'✓ Other people\'s code stays at <b>'+esc(S.copy.toLowerCase())+'.github.io</b>, away from your own apps.'}
+$('#ownOwner').onchange=e=>{S.own=e.target.value;saveS();drawOwners()};$('#copyOwner').onchange=e=>{S.copy=e.target.value;saveS();drawOwners()};
+$('#tokSave').onclick=async()=>{const t=$('#tokIn').value.trim(),p=$('#tokNewPass').value;if(!t){toast('Paste a token first');return}
+  if(await useToken(t)){if(p){if(p.length<6){toast('Passphrase too short (6+ characters) — token kept for this visit only');}else{await lockToken(t,p);toast('Token saved, locked with your passphrase')}}$('#tokIn').value='';$('#tokNewPass').value=''}};
+$('#tokUnlock').onclick=async()=>{try{const t=await unlockToken($('#tokPass').value);$('#tokPass').value='';await useToken(t)}catch(e){$('#tokMsg').textContent='✗ Wrong passphrase';}};
+$('#tokPass').onkeydown=e=>{if(e.key==='Enter')$('#tokUnlock').click()};
+$('#tokForget').onclick=()=>{store.del('sv.tok');TOKEN='';ME=null;drawTokState();$('#tokMsg').textContent='Saved token removed.'};
+function needToken(){if(TOKEN)return false;toast(store.get('sv.tok',null)?'Unlock your token in Setup first':'Add a GitHub token in Setup first');go('setup');return true}
+
+/* ====================== ingredients ====================== */
+const CUR=[ // hand-picked sources: [name, short, url, path, category, doc]
+ ['USGS Earthquakes','earthquakes from the last day','https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson','features','Science','https://earthquake.usgs.gov/earthquakes/feed/'],
+ ['NWS Weather Alerts','active weather alerts for a state','https://api.weather.gov/alerts/active?area=CT','features','Weather','https://www.weather.gov/documentation/services-web-api'],
+ ['Open-Meteo','hourly forecasts for any spot','https://api.open-meteo.com/v1/forecast?latitude=41.77&longitude=-72.34&current=temperature_2m,wind_speed_10m&temperature_unit=fahrenheit','current.temperature_2m','Weather','https://open-meteo.com/'],
+ ['Connecticut Business Registry','every company registered in Connecticut','https://data.ct.gov/resource/n7gp-d28j.json?$limit=100&$where=upper(billingcity)=%27COVENTRY%27&$order=date_registration%20DESC','','Government','https://data.ct.gov/d/n7gp-d28j'],
+ ['openFDA Food Recalls','food recalls from the FDA','https://api.fda.gov/food/enforcement.json?limit=50&sort=report_date:desc','results','Government','https://open.fda.gov/apis/'],
+ ['Federal Register','new federal rules and notices','https://www.federalregister.gov/api/v1/documents.json?per_page=50&order=newest','results','Government','https://www.federalregister.gov/developers/documentation/api/v1'],
+ ['Hacker News (Algolia)','newest tech stories','https://hn.algolia.com/api/v1/search_by_date?tags=story&hitsPerPage=50','hits','News','https://hn.algolia.com/api'],
+ ['Open Library','books and authors','https://openlibrary.org/search.json?q=treasure&limit=50','docs','Books','https://openlibrary.org/developers/api'],
+ ['Internet Archive','old books, films and recordings','https://archive.org/advancedsearch.php?q=collection%3Aprelinger&fl%5B%5D=identifier&fl%5B%5D=title&fl%5B%5D=year&fl%5B%5D=description&rows=50&output=json','response.docs','History','https://archive.org/developers/'],
+ ['iNaturalist','wildlife sightings near a spot','https://api.inaturalist.org/v1/observations?lat=41.77&lng=-72.34&radius=25&per_page=50&order_by=observed_on','results','Nature','https://api.inaturalist.org/v1/docs/'],
+ ['CoinGecko','crypto prices','https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&per_page=50','','Money','https://www.coingecko.com/en/api'],
+ ['Frankfurter','currency exchange rates','https://api.frankfurter.app/latest?from=USD','rates.EUR','Money','https://www.frankfurter.app/docs/'],
+ ['NASA Astronomy Picture','NASA\'s daily space photos','https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&count=20','','Science','https://api.nasa.gov/'],
+ ['Wikipedia On This Day','what happened on this date in history','https://api.wikimedia.org/feed/v1/wikipedia/en/onthisday/events/'+String(new Date().getMonth()+1).padStart(2,'0')+'/'+String(new Date().getDate()).padStart(2,'0'),'events','History','https://api.wikimedia.org/wiki/Feed_API'],
+ ['GitHub Trending-ish','the most-starred new repos this month','https://api.github.com/search/repositories?q=created:>'+new Date(Date.now()-30*864e5).toISOString().slice(0,10)+'&sort=stars&per_page=50','items','Developer','https://docs.github.com/rest/search'],
+ ['Socrata open data','thousands of city and state datasets (CT, NY, Chicago…)','https://data.ct.gov/resource/n7gp-d28j.json?$limit=20','','Government','https://dev.socrata.com/']
+].map(a=>({name:a[0],short:a[1],url:a[2],path:a[3],cat:a[4],doc:a[5],cur:true}));
+const PATTERNS=[
+ {id:'live',name:'Live board',kw:'tracker',st:'viewer',pitch:'live board that shows the newest {src} the moment they appear'},
+ {id:'hist',name:'History robot',kw:'history',st:'robot',pitch:'robot that records {src} every day so anyone can see how it changes over time'},
+ {id:'alarm',name:'Change alarm',kw:'alert',st:'robot',pitch:'watcher that checks {src} on a schedule and flags anything new or unusual'},
+ {id:'top',name:'Top-10 ranking',kw:'leaderboard',st:'viewer',pitch:'ranked top-10 of {src}, sorted by what matters most'},
+ {id:'map',name:'Map',kw:'map',st:'viewer',pitch:'map-style view of {src} by location'},
+ {id:'digest',name:'Daily digest page',kw:'digest',st:'robot',pitch:'one-page daily digest of {src}'},
+ {id:'cmp',name:'Side-by-side comparer',kw:'compare',st:'viewer',pitch:'side-by-side comparer for {src}'},
+ {id:'dir',name:'Local directory',kw:'directory',st:'directory',pitch:'searchable directory built from {src}'},
+ {id:'log',name:'Personal logbook',kw:'log',st:'tracker',pitch:'personal logbook that pairs your own notes with {src}'},
+ {id:'time',name:'Timeline',kw:'timeline',st:'viewer',pitch:'scrolling timeline of {src}'},
+ {id:'rand',name:'Surprise-me explorer',kw:'random',st:'viewer',pitch:'"surprise me" explorer that serves up random {src}'},
+ {id:'game',name:'Guessing game',kw:'game',st:'viewer',pitch:'guessing game built on real {src}'},
+ {id:'flags',name:'Red-flag scanner',kw:'scanner',st:'viewer',pitch:'scanner that flags the odd ones out in {src}'},
+ {id:'then',name:'Then-vs-now archive',kw:'archive',st:'robot',pitch:'then-vs-now archive of {src}'},
+ {id:'check',name:'Checklist',kw:'checklist',st:'tracker',pitch:'tick-off checklist driven by {src}'},
+ {id:'count',name:'Next-up countdown',kw:'countdown',st:'viewer',pitch:'countdown to the next item in {src}'},
+ {id:'hub',name:'One-page hub',kw:'links',st:'links',pitch:'one-page hub that links people to {src}'},
+ {id:'report',name:'Printable report',kw:'report',st:'viewer',pitch:'printable one-page report on {src}'},
+ {id:'bingo',name:'Bingo / scavenger hunt',kw:'bingo',st:'tracker',pitch:'bingo-style hunt card built from {src}'},
+ {id:'widget',name:'Embeddable widget',kw:'widget',st:'viewer',pitch:'small widget other sites can embed to show {src}'}
+];
+const AUD=['small businesses in your town','resellers and flippers','collectors','landlords','homeowners','teachers','students','parents','hikers','anglers and hunters','gardeners','pet owners','birdwatchers','history buffs','mystery and conspiracy fans','crypto traders','sports fans','truck drivers','contractors','real estate agents','nonprofits and clubs','churches','seniors','car flippers','gamers','amateur astronomers','weather watchers','preppers','genealogists','local journalists','people in one specific town'];
+const TWIST=['with a daily streak','that fits on one phone screen','with a printable one-page report','that covers just one town','that alerts you when something changes','with a then-vs-now view','ranked from weirdest to most normal','with a shareable image card','that works offline','with CSV export for spreadsheets','that compares two places','with a countdown','in game form','with a leaderboard','that flags anomalies','with a "surprise me" button','built for big thumbs and gloves','with a weekly summary','with a map view','with favorites you can star'];
+const MONEY=['sell a custom version to local businesses (one-time setup fee)','use it as a free lead magnet for a service you sell','add a tip-jar or donation link','link to related products with affiliate links','get one local sponsor to put a small banner on it','offer paid setup for clubs and groups who want their own copy','build an audience first, then offer a paid newsletter elsewhere'];
+let PA=null;
+async function loadPA(){if(PA)return PA;const c=store.get('sv.pa',null);if(c&&Date.now()-c.at<7*864e5){PA=c.rows;return PA}
+  const t=await (await fetch('https://raw.githubusercontent.com/public-apis/public-apis/master/README.md')).text();let cat=null;const rows=[];
+  for(const line of t.split('\n')){if(line.startsWith('### ')){cat=line.slice(4).trim();continue}
+    const m=line.match(/^\|\s*\[([^\]]+)\]\(([^)]+)\)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|?\s*$/);
+    if(m&&cat&&!/APILayer/i.test(cat))rows.push({name:m[1],doc:m[2],short:m[3].replace(/\s+/g,' ').slice(0,120),auth:m[4].replace(/`/g,'').trim(),https:m[5].trim(),cors:m[6].replace(/\|/g,'').trim(),cat,url:'',path:''})}
+  PA=rows;store.set('sv.pa',{at:Date.now(),rows});return PA}
+async function pool(){const v=$('#srcPool').value;if(v==='cur')return CUR;const all=await loadPA();return v==='pa'?all.filter(r=>/^no$/i.test(r.auth)&&/^yes$/i.test(r.cors)):all}
+
+/* ====================== idea reels ====================== */
+let R=store.get('sv.reels',null)||{src:CUR[0],pat:PATTERNS[0],aud:AUD[0],tw:TWIST[0],lock:{}};
+const saveR=()=>store.set('sv.reels',R);
+function drawReels(){const cell=(k,t,v,d)=>'<div class="reel'+(R.lock[k]?' lock':'')+'"><div class="k">'+t+'</div><div class="v">'+esc(v)+'</div><div class="d">'+esc(d||'')+'</div><div class="ctl"><button class="lk" data-lock="'+k+'">'+(R.lock[k]?'🔒 Locked':'Lock')+'</button><button data-one="'+k+'">↻</button></div></div>';
+  $('#reels').innerHTML=cell('src','Data',R.src.name,R.src.short)+cell('pat','Tool',R.pat.name,'')+cell('aud','For',R.aud,'')+cell('tw','Twist',R.tw,'')}
+async function spinOne(k){if(k==='src'){try{R.src=rnd(await pool())}catch(e){toast('Could not load the API list: '+e.message)}}if(k==='pat')R.pat=rnd(PATTERNS);if(k==='aud')R.aud=rnd(AUD);if(k==='tw')R.tw=rnd(TWIST)}
+$('#reels').onclick=async e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.lock){R.lock[b.dataset.lock]=!R.lock[b.dataset.lock]}else if(b.dataset.one){await spinOne(b.dataset.one);R.idea=makeIdea()}saveR();drawReels();drawIdea()};
+$('#spin').onclick=async()=>{for(const k of ['src','pat','aud','tw'])if(!R.lock[k])await spinOne(k);R.idea=makeIdea();saveR();drawReels();drawIdea();$('#ideaOut').scrollIntoView({behavior:'smooth',block:'nearest'})};
+$('#srcPool').onchange=async()=>{if($('#srcPool').value!=='cur'){$('#srcList').innerHTML='<div class="note small"><span class="spin"></span> Loading the public-apis list from GitHub…</div>';try{await loadPA()}catch(e){toast('Could not load the list')}}drawSources()};
+function makeIdea(){const src=R.src,p=R.pat;const short=src.short||src.name;
+  const m1=rnd(MONEY);let m2=rnd(MONEY);if(m2===m1)m2=MONEY[(MONEY.indexOf(m1)+1)%MONEY.length];
+  return {id:Date.now().toString(36),title:p.name+': '+src.name,pitch:'A '+p.pitch.replace('{src}',short)+' — for '+R.aud+', '+R.tw+'.',src,pat:p.id,aud:R.aud,tw:R.tw,money:[m1,m2],st:p.st,saved:false}}
+function buildPath(st){return {viewer:'Build tab → Live data viewer. Paste the data address, tick the fields to show.',robot:'Build tab → Robot tracker. A free GitHub robot checks the data on a schedule and the page charts it.',directory:'Build tab → Directory from a spreadsheet. Export the data to CSV and paste it in.',tracker:'Build tab → Logbook. Set up the fields you want to log.',links:'Build tab → Link page.'}[st]}
+function drawIdea(){const I=R.idea;if(!I){$('#ideaOut').innerHTML='';return}
+  $('#ideaOut').innerHTML='<div class="idea"><div class="lbl">Idea</div><div class="nm">'+esc(I.title)+'</div><div class="pitch">'+esc(I.pitch)+'</div>'+
+  '<div class="lbl">How to build it free</div><ul><li>'+esc(buildPath(I.st))+'</li>'+(I.src.url?'':'<li>Find the data address on the source\'s docs page: <a href="'+esc(I.src.doc)+'" target="_blank" rel="noopener">'+esc(I.src.name)+' docs ↗</a></li>')+(I.src.cors&&!/^yes$/i.test(I.src.cors)?'<li>⚠ This source may block browser apps (CORS: '+esc(I.src.cors)+'). Use the Robot starter, which fetches from GitHub\'s servers instead.</li>':'')+(I.src.auth&&!/^no$/i.test(I.src.auth)?'<li>⚠ Needs a free key ('+esc(I.src.auth)+'). Keys put in a public page are visible to everyone, so only use free, low-risk keys.</li>':'')+'</ul>'+
+  '<div class="lbl">Ways it could earn</div><ul>'+I.money.map(m=>'<li>'+esc(m)+'</li>').join('')+'</ul>'+
+  '<div id="taken"></div><div class="row" style="margin-top:10px"><button class="btn ghost sm" id="iTaken">Is it taken?</button><button class="btn sm" id="iBuild">Build it</button><button class="btn ghost sm" id="iSave">'+(ideas.some(x=>x.title===I.title&&x.pitch===I.pitch)?'Saved ✓':'Save idea')+'</button></div></div>'}
+$('#ideaOut').addEventListener('click',async e=>{const t=e.target,I=R.idea;if(!I)return;
+  if(t.id==='iSave'){if(!ideas.some(x=>x.title===I.title&&x.pitch===I.pitch)){ideas.unshift(Object.assign({},I,{status:'Idea',notes:'',savedAt:new Date().toISOString()}));saveIdeas()}t.textContent='Saved ✓'}
+  if(t.id==='iBuild')startBuildFromIdea(I);
+  if(t.id==='iTaken'){t.disabled=true;$('#taken').innerHTML='<div class="small"><span class="spin"></span> Searching GitHub…</div>';
+    try{const term=I.src.name.replace(/\(.*?\)/g,'').split(/\s+/).slice(0,2).join(' ');const q='"'+term+'" '+PATTERNS.find(p=>p.id===I.pat).kw+' in:name,description,readme';
+      const j=await gh('/search/repositories?q='+encodeURIComponent(q)+'&per_page=3&sort=stars');const n=j.total_count;const cls=n<=2?'fresh':n<=15?'some':'crowded';
+      $('#taken').innerHTML='<span class="verdict '+cls+'">'+(cls==='fresh'?'Fresh':cls==='some'?'A few exist':'Crowded')+' — '+fmtN(n)+' similar repo'+(n===1?'':'s')+'</span>'+(j.items.length?'<ul>'+j.items.map(r=>'<li><a href="'+esc(r.html_url)+'" target="_blank" rel="noopener">'+esc(r.full_name)+'</a> ★'+fmtN(r.stargazers_count)+'</li>').join('')+'</ul>':'')+'<div class="small" style="color:#7a6c55">Searched: '+esc(q)+'</div>'}
+    catch(err){$('#taken').innerHTML='<div class="small">'+esc(err.message)+'</div>'}t.disabled=false}});
+/* source browser */
+async function drawSources(){let list;try{list=await pool()}catch(e){$('#srcList').innerHTML='<div class="note bad small">Could not load the list.</div>';return}
+  const cats=[...new Set(list.map(s=>s.cat))].sort();const cur=$('#srcCat').value;$('#srcCat').innerHTML='<option value="">All categories</option>'+cats.map(c=>'<option'+(c===cur?' selected':'')+'>'+esc(c)+'</option>').join('');
+  const q=$('#srcQ').value.toLowerCase(),c=$('#srcCat').value;const f=list.filter(s=>(!c||s.cat===c)&&(!q||(s.name+' '+s.short+' '+s.cat).toLowerCase().includes(q)));
+  $('#srcList').innerHTML='<p class="small muted">'+fmtN(f.length)+' sources'+(f.length>60?' (showing 60 — search to narrow)':'')+'</p>'+f.slice(0,60).map((s,i)=>'<div class="item"><div class="nm">'+esc(s.name)+' <span class="small muted">· '+esc(s.cat)+'</span></div><div class="small muted">'+esc(s.short)+'</div>'+(s.cur?'':'<div class="small mono muted">key: '+esc(s.auth||'?')+' · browser: '+esc(s.cors||'?')+'</div>')+'<div class="row" style="margin-top:6px"><button class="btn ghost sm" data-use="'+i+'">Use in idea</button><a class="btn ghost sm" href="'+esc(s.doc)+'" target="_blank" rel="noopener">Docs ↗</a>'+(s.url?'<button class="btn ghost sm" data-test="'+i+'">Test</button>':'')+'</div><div class="small" data-res="'+i+'"></div></div>').join('');
+  $('#srcList').onclick=async e=>{const t=e.target;if(t.dataset.use!=null){R.src=f[+t.dataset.use];R.lock.src=true;R.idea=makeIdea();saveR();drawReels();drawIdea();window.scrollTo({top:0,behavior:'smooth'})}
+    if(t.dataset.test!=null){const s=f[+t.dataset.test],out=$('[data-res="'+t.dataset.test+'"]');out.innerHTML='<span class="spin"></span>';try{const r=await fetch(s.url);const j=await r.json();out.innerHTML='<span style="color:var(--grn)">✓ Works in a browser</span> · '+(Array.isArray(getP(j,s.path))?getP(j,s.path).length+' records':'value: '+esc(JSON.stringify(getP(j,s.path)).slice(0,60)))}catch(err){out.innerHTML='<span style="color:var(--red)">✗ Blocked or down</span> ('+esc(err.message)+'). Try the Robot starter for this one.'}}}}
+$('#srcQ').oninput=drawSources;$('#srcCat').onchange=drawSources;
+const getP=(o,p)=>p?String(p).split('.').reduce((a,k)=>a==null?a:a[k],o):o;
+
+/* ====================== parts (GitHub search) ====================== */
+const PRESETS=[
+ ['Ready-to-host web tools','topic:github-pages language:HTML'],['Single-file apps','"single file" language:HTML'],['Calculators','calculator language:HTML'],['Dashboards','topic:dashboard language:JavaScript'],
+ ['Maps','topic:leaflet language:JavaScript'],['Browser games','topic:html5-game'],['Data robots (git scraping)','topic:git-scraping'],['Templates','is:template language:HTML'],
+ ['Progressive web apps','topic:pwa language:JavaScript'],['Bookmarklets','topic:bookmarklet'],['Awesome lists (ideas)','topic:awesome-list'],['Self-hosted tools','topic:self-hosted language:JavaScript']];
+let pPreset='',pPage=1,pItems=[],pQuery='';
+$('#pPresets').innerHTML=PRESETS.map((p,i)=>'<button class="chip" data-p="'+i+'">'+esc(p[0])+'</button>').join('');
+$('#pPresets').onclick=e=>{const b=e.target.closest('[data-p]');if(!b)return;const i=+b.dataset.p;pPreset=pPreset===PRESETS[i][1]?'':PRESETS[i][1];$$('#pPresets .chip').forEach(x=>x.classList.toggle('on',pPreset&&x===b));partsSearch(true)};
+$('#pGo').onclick=()=>partsSearch(true);$('#pQ').onkeydown=e=>{if(e.key==='Enter')partsSearch(true)};$('#pMore').onclick=()=>partsSearch(false);
+['#pStars','#pFresh','#pSort'].forEach(id=>$(id).onchange=()=>{if(pQuery)partsSearch(true)});$('#pLic').onchange=drawParts;
+const PERM=/^(MIT|Apache-2\.0|BSD-2-Clause|BSD-3-Clause|ISC|Unlicense|CC0-1\.0|0BSD|Zlib|MPL-2\.0|BSL-1\.0|WTFPL)$/i,COPY=/^(GPL|AGPL|LGPL|EPL|CC-BY-SA|EUPL|OSL)/i;
+const licOf=r=>{const id=r.license&&r.license.spdx_id;if(!id)return {c:'none',t:'No license'};if(PERM.test(id))return {c:'ok',t:id};if(COPY.test(id))return {c:'copy',t:id+' (share-alike)'};if(id==='NOASSERTION')return {c:'copy',t:'Custom license — read it'};return {c:'copy',t:id}};
+async function partsSearch(reset){const q=$('#pQ').value.trim();if(!q&&!pPreset){toast('Type something or pick a shelf');return}
+  if(reset){pPage=1;pItems=[]}
+  const days=+$('#pFresh').value,stars=+$('#pStars').value;
+  pQuery=[q,pPreset,stars?'stars:>='+stars:'',days?'pushed:>='+new Date(Date.now()-days*864e5).toISOString().slice(0,10):'','archived:false'].filter(Boolean).join(' ');
+  $('#pOut').innerHTML=reset?'<div class="note small"><span class="spin"></span> Searching GitHub…</div>':$('#pOut').innerHTML;$('#pMore').hidden=true;
+  try{const s=$('#pSort').value;const j=await gh('/search/repositories?q='+encodeURIComponent(pQuery)+'&per_page=30&page='+pPage+(s?'&sort='+s+'&order=desc':''));
+    pItems=pItems.concat(j.items||[]);pPage++;drawParts(j.total_count);$('#pMore').hidden=pItems.length>=Math.min(j.total_count,1000)}
+  catch(e){$('#pOut').innerHTML='<div class="note bad small">'+esc(e.message)+'</div>'}}
+function drawParts(total){const lf=$('#pLic').value;const vis=pItems.filter(r=>lf==='all'||(lf==='any'?!!(r.license&&r.license.spdx_id):licOf(r).c==='ok'));
+  if(!pItems.length){$('#pOut').innerHTML='<div class="note small">Nothing found. Try fewer words, lower stars or "Any time".</div>';return}
+  $('#pOut').innerHTML='<p class="small muted">'+(typeof total==='number'?fmtN(total)+' on GitHub · ':'')+vis.length+' shown with this license filter</p>'+vis.map(r=>{const L=licOf(r);return '<div class="part" data-full="'+esc(r.full_name)+'" role="button" tabindex="0"><span class="stars">★ '+fmtN(r.stargazers_count)+'</span><div class="nm">'+esc(r.full_name)+'</div><div class="ds">'+esc((r.description||'').slice(0,180))+'</div><div class="meta"><span class="lic '+L.c+'">'+esc(L.t)+'</span><span>'+esc(r.language||'')+'</span><span>updated '+ago(r.pushed_at)+'</span>'+(r.homepage?'<span>has demo</span>':'')+(r.is_template?'<span>template</span>':'')+'</div></div>'}).join('')}
+$('#pOut').addEventListener('click',e=>{const p=e.target.closest('.part');if(p)openPart(pItems.find(r=>r.full_name===p.dataset.full)||parts.find(r=>r.full_name===p.dataset.full))});
+
+/* part detail */
+let curPart=null;
+function openSheet(title){$('#shTitle').textContent=title;$('#sheet').hidden=false;document.body.style.overflow='hidden';$('#sheet').scrollTop=0}
+$('#shClose').onclick=()=>{$('#sheet').hidden=true;document.body.style.overflow='';drawMine()};
+async function analyze(r){const full=r.full_name,br=r.default_branch;const out={branch:br,path:'/',ok:false,why:''};
+  if(r.has_pages){try{const p=await gh('/repos/'+full+'/pages');if(p&&p.source){Object.assign(out,{branch:p.source.branch,path:p.source.path,ok:true,live:p.html_url,why:'The author already publishes it with GitHub Pages, so your copy can publish the same way.'});return out}}catch(e){}}
+  let root=[];try{root=await gh('/repos/'+full+'/contents?ref='+encodeURIComponent(br))}catch(e){out.why='Could not read the files: '+e.message;return out}
+  const names=(Array.isArray(root)?root:[]).map(f=>f.name.toLowerCase());const pkg=names.includes('package.json');
+  const check=async(path,dir)=>{let html='';try{html=await (await fetch(rawURL(full,br,path))).text()}catch(e){}
+    const build=/src=["'][^"']*\.(tsx?|jsx|vue|svelte)["']/i.test(html)||/%PUBLIC_URL%|<%=|\{\{\s*\w/.test(html)||(pkg&&/src=["']\/src\//i.test(html));
+    if(build)Object.assign(out,{ok:false,why:'It has an index.html, but it needs a build step (it loads source code that has to be compiled first). That needs a computer with Node installed.'});
+    else Object.assign(out,{ok:true,path:dir,why:'It\'s plain HTML/JavaScript'+(dir==='/docs'?' in a docs folder':'')+', so it can be published as-is.'});return true};
+  if(names.includes('index.html')){await check('index.html','/');return out}
+  if(names.includes('docs')){let d=[];try{d=await gh('/repos/'+full+'/contents/docs?ref='+encodeURIComponent(br))}catch(e){}if(Array.isArray(d)&&d.some(f=>f.name.toLowerCase()==='index.html')){await check('docs/index.html','/docs');return out}}
+  try{await gh('/repos/'+full+'/branches/gh-pages');Object.assign(out,{ok:true,branch:'gh-pages',path:'/',why:'It has a ready-built gh-pages branch, which can be published as-is.'});return out}catch(e){}
+  out.why=pkg?'No ready-to-host page. It\'s a Node project that needs to be built on a computer first.':/^(Python|Go|Rust|Java|C#|C\+\+|C|PHP|Ruby)$/.test(r.language||'')?'It\'s a '+r.language+' program, not a web page. GitHub Pages can\'t run it, but a robot (GitHub Actions) sometimes can.':'No index.html found, so there\'s nothing to publish as a web page.';return out}
+async function openPart(r){if(!r)return;curPart=r;openSheet(r.full_name);const L=licOf(r);
+  $('#shBody').innerHTML='<div class="part" style="cursor:default"><span class="stars">★ '+fmtN(r.stargazers_count)+'</span><div class="nm">'+esc(r.full_name)+'</div><div class="ds">'+esc(r.description||'')+'</div><div class="meta"><span class="lic '+L.c+'">'+esc(L.t)+'</span><span>'+esc(r.language||'')+'</span><span>updated '+ago(r.pushed_at)+'</span><span>'+fmtN(r.forks_count)+' copies</span></div></div>'+
+  (L.c==='none'?'<div class="note bad small"><b>No license.</b> By default nobody else may copy or republish this code. Look at it for ideas, or ask the author to add a license.</div>':L.c==='copy'?'<div class="note warn small"><b>'+esc(L.t)+'.</b> You can copy and change it, but your version must stay public under the same license with credit to the author.</div>':'<div class="note ok small"><b>'+esc(L.t)+'.</b> You may copy, change and even sell it. Keep their LICENSE file in your copy (copying does this automatically).</div>')+
+  '<div class="row" style="margin:8px 0">'+(r.homepage?'<a class="btn ghost sm" href="'+esc(r.homepage)+'" target="_blank" rel="noopener">Live demo ↗</a>':'')+'<a class="btn ghost sm" href="'+esc(r.html_url)+'" target="_blank" rel="noopener">Code ↗</a><a class="btn ghost sm" href="https://github.dev/'+esc(r.full_name)+'" target="_blank" rel="noopener">Edit in browser ↗</a><a class="btn ghost sm" href="https://github.com/'+esc(r.full_name)+'/archive/refs/heads/'+esc(r.default_branch)+'.zip">ZIP</a><button class="btn ghost sm" id="ptSave">'+(parts.some(p=>p.full_name===r.full_name)?'Saved ✓':'Save part')+'</button><button class="btn ghost sm" id="ptRemix">Spin ideas with it</button></div>'+
+  '<h2>Can it be published free?</h2><div id="ptAn"><div class="small"><span class="spin"></span> Checking its files…</div></div><div id="ptPub"></div>'+
+  '<h2>Read me</h2><div id="ptRd"><div class="small"><span class="spin"></span> Loading…</div></div>';
+  analyze(r).then(a=>{if(curPart!==r)return;r._an=a;$('#ptAn').innerHTML='<div class="note '+(a.ok?'ok':'warn')+' small">'+(a.ok?'✓ ':'✗ ')+esc(a.why)+(a.live?' <a href="'+esc(a.live)+'" target="_blank" rel="noopener">Their live site ↗</a>':'')+'</div>'+(a.ok&&L.c!=='none'?'<button class="btn" id="ptCopy" style="width:100%">Copy to my GitHub + publish</button><p class="small muted">Goes to <b>'+esc(S.copy||'your account')+'</b> (change in Setup). '+(r.is_template?'It\'s a template, so you get a clean copy that is yours.':'Makes a linked copy (a "fork") that keeps their credit.')+'</p>':'')+'<ul class="steps" id="ptSteps"></ul>'}).catch(e=>{$('#ptAn').innerHTML='<div class="note bad small">'+esc(e.message)+'</div>'});
+  gh('/repos/'+r.full_name+'/readme',{accept:'application/vnd.github.html'}).then(html=>{if(curPart!==r)return;const f=document.createElement('iframe');f.className='readme';f.setAttribute('sandbox','allow-popups allow-popups-to-escape-sandbox');f.title='Read me';
+    f.srcdoc='<base href="https://github.com/'+esc(r.full_name)+'/blob/'+esc(r.default_branch)+'/" target="_blank"><style>body{font:14px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;padding:12px;color:#1f2328}img{max-width:100%}pre{overflow:auto;background:#f6f8fa;padding:8px}</style>'+html;$('#ptRd').innerHTML='';$('#ptRd').appendChild(f)}).catch(()=>{if(curPart===r)$('#ptRd').innerHTML='<p class="small muted">No read-me file.</p>'})}
+$('#shBody').addEventListener('click',async e=>{const t=e.target;if(!curPart)return;const r=curPart;
+  if(t.id==='ptSave'){if(!parts.some(p=>p.full_name===r.full_name)){parts.unshift({full_name:r.full_name,description:r.description,stargazers_count:r.stargazers_count,license:r.license,language:r.language,pushed_at:r.pushed_at,html_url:r.html_url,homepage:r.homepage,default_branch:r.default_branch,has_pages:r.has_pages,is_template:r.is_template,forks_count:r.forks_count,savedAt:new Date().toISOString(),notes:''});saveParts()}t.textContent='Saved ✓'}
+  if(t.id==='ptRemix'){R.src={name:r.name,short:(r.description||r.name).slice(0,90),url:'',path:'',cat:'GitHub',doc:r.html_url};R.lock.src=true;R.idea=makeIdea();saveR();drawReels();drawIdea();$('#sheet').hidden=true;document.body.style.overflow='';go('ideas')}
+  if(t.id==='ptCopy'){if(needToken())return;t.disabled=true;await copyAndPublish(r,r._an,$('#ptSteps'));t.disabled=false}});
+function stepper(ul){ul.innerHTML='';return (txt)=>{const li=document.createElement('li');li.className='run';li.innerHTML=txt;ul.appendChild(li);return {done(h){li.className='done';if(h)li.innerHTML=h},err(m){li.className='err';li.innerHTML=txt+' — '+esc(m)}}}}
+async function copyAndPublish(r,a,ul){const step=stepper(ul);const owner=S.copy||ME.login;let nr,s;
+  try{s=step('Making your copy in <b>'+esc(owner)+'</b>…');
+    if(r.is_template)nr=await gh('/repos/'+r.full_name+'/generate',{method:'POST',body:{owner,name:r.name,include_all_branches:a.branch!==r.default_branch}});
+    else nr=await gh('/repos/'+r.full_name+'/forks',{method:'POST',body:Object.assign({default_branch_only:false},owner!==ME.login?{organization:owner}:{})});
+    const ok=await waitFor(async()=>{await gh('/repos/'+nr.full_name+'/branches/'+encodeURIComponent(a.branch));return true},20,3000);
+    if(!ok)throw new Error('GitHub is still copying it. Try "Publish" again from Mine in a minute.');
+    s.done('Copied to <a href="'+esc(nr.html_url)+'" target="_blank" rel="noopener">'+esc(nr.full_name)+'</a>');
+    await publishExisting(nr.owner.login,nr.name,a.branch,a.path,step,true)}
+  catch(err){(s||step('Copy')).err(err.message)}}
+async function publishExisting(owner,name,branch,path,step,isCopy){const s=step('Turning on GitHub Pages…');
+  try{await enablePages(owner,name,branch,path);s.done('Pages turned on');
+    const w=step('Waiting for the site to build (about a minute)…');const p=await waitPages(owner,name,(st,i)=>{if(i===20&&isCopy)w.done('Still building. If it never finishes: open the repo → <b>Actions</b> tab → enable workflows.')});
+    w.done(p.pending?'Not built yet. It should appear at <a href="'+esc(p.html_url)+'" target="_blank" rel="noopener">'+esc(p.html_url)+'</a> within a few minutes.':'✓ Live at <a href="'+esc(p.html_url)+'" target="_blank" rel="noopener"><b>'+esc(p.html_url)+'</b></a>');
+    try{await gh('/repos/'+owner+'/'+name,{method:'PATCH',body:{homepage:p.html_url}})}catch(e){}
+    return p}catch(err){s.err(err.message)}}
+
+/* ====================== builder ====================== */
+const THEMES={
+ Paper:{bg:'#f6f3ea',fg:'#1f1f1f',card:'#fffdf7',line:'#ddd6c4',acc:'#2f5d50',accfg:'#ffffff',font:'Georgia,"Times New Roman",serif'},
+ Night:{bg:'#0f1218',fg:'#e8ecf2',card:'#171c25',line:'#273041',acc:'#5b8cff',accfg:'#ffffff',font:'-apple-system,"Segoe UI",Roboto,sans-serif'},
+ Neon:{bg:'#0b0b10',fg:'#f2f2f7',card:'#15151f',line:'#2a2a3a',acc:'#ff2d95',accfg:'#ffffff',font:'-apple-system,"Segoe UI",Roboto,sans-serif'},
+ Shop:{bg:'#ffffff',fg:'#1d1d1f',card:'#fafafa',line:'#e5e5ea',acc:'#e4572e',accfg:'#ffffff',font:'-apple-system,"Segoe UI",Roboto,sans-serif'},
+ Field:{bg:'#eef2e6',fg:'#20291b',card:'#f8faf3',line:'#cfd8c0',acc:'#3f6b2a',accfg:'#ffffff',font:'-apple-system,"Segoe UI",Roboto,sans-serif'},
+ Blueprint:{bg:'#0e2a47',fg:'#e6f0ff',card:'#12355a',line:'#2d5c8a',acc:'#f4c542',accfg:'#0e2a47',font:'ui-monospace,Menlo,Consolas,monospace'}};
+const STARTERS={
+ viewer:{name:'Live data viewer',d:'Point it at any free data address. Search, sort, favorites, CSV.'},
+ robot:{name:'Robot tracker',d:'A free GitHub robot checks a number on a schedule and charts it.'},
+ directory:{name:'Directory',d:'Paste a spreadsheet (CSV). Get a searchable list with categories.'},
+ tracker:{name:'Logbook',d:'Your own fields. Log entries, see totals, export. Saves on the phone.'},
+ links:{name:'Link page',d:'One page with call, email, links and "save contact". Great for small businesses.'}};
+let B=store.get('sv.build',null)||{st:'viewer',theme:'Night',acc:'',foot:'',title:'',sub:'',url:'',path:'',fields:[],titleField:'',imageField:'',linkField:'',refresh:0,schedule:'daily',label:'',unit:'',csv:'',titleCol:'',catCol:'',linkCol:'',tfields:'Date:date\nWhat:text\nAmount:number\nNotes:note',bio:'',phone:'',email:'',links:'',info:''};
+const saveB=()=>store.set('sv.build',B);
+$('#starters').innerHTML=Object.entries(STARTERS).map(([k,s])=>'<button data-st="'+k+'"><b>'+esc(s.name)+'</b><span>'+esc(s.d)+'</span></button>').join('');
+$('#starters').onclick=e=>{const b=e.target.closest('[data-st]');if(!b)return;B.st=b.dataset.st;saveB();drawBuild()};
+$('#bTheme').innerHTML=Object.keys(THEMES).map(k=>'<option>'+k+'</option>').join('');
+$('#bTheme').onchange=e=>{B.theme=e.target.value;B.acc='';saveB();$('#bAcc').value=THEMES[B.theme].acc};
+$('#bAcc').oninput=e=>{B.acc=e.target.value;saveB()};$('#bFoot').oninput=e=>{B.foot=e.target.value;saveB()};
+const fld=(id,label,ph,val,type)=>'<label class="f" style="margin-top:8px"><span>'+label+'</span>'+(type==='ta'?'<textarea data-b="'+id+'" placeholder="'+esc(ph)+'">'+esc(val)+'</textarea>':'<input type="'+(type||'text')+'" data-b="'+id+'" placeholder="'+esc(ph)+'" value="'+esc(val)+'">')+'</label>';
+function drawBuild(){$$('#starters button').forEach(b=>b.classList.toggle('on',b.dataset.st===B.st));$('#bTheme').value=B.theme;$('#bAcc').value=B.acc||THEMES[B.theme].acc;$('#bFoot').value=B.foot;
+  let h=fld('title','Title','e.g. Coventry Quake Watch',B.title)+fld('sub','Subtitle (optional)','One line under the title',B.sub);
+  if(B.st==='viewer')h+=fld('url','Data address (a URL that returns JSON)','https://…',B.url,'url')+'<div class="row" style="margin-top:8px"><button class="btn sm" id="bFetch">Fetch + find fields</button><span class="small muted" id="bFetchMsg"></span></div><div id="bFields">'+fieldsHtml()+'</div><label class="f" style="margin-top:8px"><span>Auto-refresh</span><select data-b="refresh"><option value="0">Off</option><option value="1">Every minute</option><option value="5">Every 5 minutes</option><option value="30">Every 30 minutes</option></select></label>';
+  if(B.st==='robot')h+=fld('url','Data address the robot checks (JSON)','https://…',B.url,'url')+fld('path','Which value to track (dot path, e.g. current.temperature_2m). Blank = save the whole response','',B.path)+'<div class="row" style="margin-top:8px"><button class="btn sm" id="bRobotTest">Test the address</button><span class="small muted" id="bRobotMsg"></span></div>'+
+    '<label class="f" style="margin-top:8px"><span>How often</span><select data-b="schedule"><option value="hourly">Every hour</option><option value="6h">Every 6 hours</option><option value="daily">Every day</option><option value="weekly">Every week</option></select></label>'+fld('label','Label for the number','e.g. Temperature in Coventry',B.label)+fld('unit','Unit (optional)','e.g. °F or $',B.unit)+
+    '<p class="small muted">The robot runs on GitHub\'s servers, so it works even for data sources that block browser apps. GitHub may run it a few minutes late.</p>';
+  if(B.st==='directory'){h+=fld('csv','Paste CSV (first row = column names)','Name,Category,Phone,Website\nJoe\'s Pizza,Food,860-555-0100,https://…',B.csv,'ta')+'<button class="btn sm" id="bCsv" style="margin-top:8px">Read columns</button><div id="bCols">'+colsHtml()+'</div>'}
+  if(B.st==='tracker')h+=fld('tfields','Fields, one per line as Name:type (types: text, number, date, note, or a list like Size:S|M|L)','',B.tfields,'ta');
+  if(B.st==='links')h+=fld('bio','Short description','What you do, where',B.bio)+'<div class="grid2">'+fld('phone','Phone','860-555-0100',B.phone,'tel')+fld('email','Email','you@example.com',B.email)+'</div>'+fld('links','Links, one per line as Label | URL','Book online | https://…\nFacebook | https://…',B.links,'ta')+fld('info','Hours / address / notes (optional)','Mon–Fri 8–5\n12 Main St',B.info,'ta');
+  $('#bForm').innerHTML='<h2>'+esc(STARTERS[B.st].name)+'</h2>'+h;
+  $$('#bForm [data-b]').forEach(el=>{if(el.tagName==='SELECT')el.value=String(B[el.dataset.b])});
+  if(!$('#bRepo').value)$('#bRepo').value=slug(B.title)}
+$('#bForm').addEventListener('input',e=>{const k=e.target.dataset.b;if(k){B[k]=e.target.value;if(k==='title'&&!$('#bRepo').dataset.touched)$('#bRepo').value=slug(B.title);saveB()}
+  const fk=e.target.dataset.fl;if(fk!=null){B.fields[+fk].label=e.target.value;saveB()}});
+$('#bForm').addEventListener('change',e=>{const t=e.target;if(t.dataset.b&&t.tagName==='SELECT'){B[t.dataset.b]=t.value;saveB()}
+  if(t.dataset.fs!=null){B.fields[+t.dataset.fs].show=t.checked;saveB()}
+  if(t.dataset.role){B[t.dataset.role]=t.value;saveB()}});
+$('#bRepo').oninput=()=>{$('#bRepo').dataset.touched='1'};
+/* viewer field detection */
+function findArrays(j,path,out){out=out||[];if(Array.isArray(j)){if(j.length&&j[0]&&typeof j[0]==='object'&&!Array.isArray(j[0]))out.push({path:path||'',len:j.length});return out}if(j&&typeof j==='object')for(const k of Object.keys(j).slice(0,60))findArrays(j[k],path?path+'.'+k:k,out);return out}
+function leaves(rec,pre,depth,out){for(const k of Object.keys(rec||{})){const v=rec[k],p=pre?pre+'.'+k:k;if(v&&typeof v==='object'&&!Array.isArray(v)&&depth<2)leaves(v,p,depth+1,out);else if(v==null||['string','number','boolean'].includes(typeof v))out.add(p)}return out}
+const nice=k=>k.split('.').pop().replace(/_/g,' ').replace(/([a-z])([A-Z])/g,'$1 $2').replace(/^./,c=>c.toUpperCase());
+function fieldsHtml(){if(!B.fields.length)return '';const opts=sel=>'<option value="">—</option>'+B.fields.map(f=>'<option'+(f.key===sel?' selected':'')+' value="'+esc(f.key)+'">'+esc(f.key)+'</option>').join('');
+  return '<div class="grid2" style="margin-top:8px"><label class="f"><span>Title field</span><select data-role="titleField">'+opts(B.titleField)+'</select></label><label class="f"><span>Link field</span><select data-role="linkField">'+opts(B.linkField)+'</select></label><label class="f"><span>Picture field</span><select data-role="imageField">'+opts(B.imageField)+'</select></label></div><p class="small muted" style="margin:10px 0 4px">Tick the fields to show and rename them:</p>'+
+  B.fields.map((f,i)=>'<div class="fieldrow"><input type="checkbox" data-fs="'+i+'"'+(f.show?' checked':'')+' aria-label="Show '+esc(f.key)+'"><code>'+esc(f.key)+'</code><input type="text" data-fl="'+i+'" value="'+esc(f.label)+'" aria-label="Label for '+esc(f.key)+'"></div>').join('')}
+async function fetchFields(){const msg=$('#bFetchMsg');msg.innerHTML='<span class="spin"></span>';
+  try{const r=await fetch(B.url);if(!r.ok)throw new Error('HTTP '+r.status);const j=await r.json();
+    const arrs=findArrays(j,'');if(!arrs.length)throw new Error('No list of records found in that response');const a=arrs.sort((x,y)=>y.len-x.len)[0];B.path=a.path;
+    const recs=(a.path?getP(j,a.path):j).slice(0,25);const keys=new Set();recs.forEach(rc=>leaves(rc,'',0,keys));const K=[...keys].slice(0,60);
+    const sample=k=>recs.map(rc=>getP(rc,k)).find(v=>v!=null&&v!=='');
+    B.titleField=K.find(k=>/(^|\.)(title|name|headline|label|place|full_name|common_name|display_name)$/i.test(k))||K.find(k=>typeof sample(k)==='string')||K[0];
+    B.linkField=K.find(k=>/^https?:\/\//.test(String(sample(k)||''))&&!/\.(jpe?g|png|gif|webp)(\?|$)/i.test(String(sample(k))))||'';
+    B.imageField=K.find(k=>/\.(jpe?g|png|gif|webp)(\?|$)/i.test(String(sample(k)||''))||(/(image|thumb|photo|img|picture)/i.test(k)&&/^https?:/.test(String(sample(k)||''))))||'';
+    let shown=0;B.fields=K.map(k=>{const v=sample(k);const show=k!==B.titleField&&k!==B.linkField&&k!==B.imageField&&v!=null&&String(v).length<200&&!/(^|\.)(id|_id|uuid|guid|type|ids|code|tz|tsunami|sig|net|nst|dmin|rms|gap|magType)$/i.test(k)&&shown++<6;return {key:k,label:nice(k),show}});
+    if(!B.title)B.title=a.path?nice(a.path)+' viewer':'Data viewer';saveB();drawBuild();$('#bFetchMsg').innerHTML='<span style="color:var(--grn)">✓ '+recs.length+'+ records found at <code>'+esc(a.path||'(top level)')+'</code></span>'}
+  catch(e){msg.innerHTML='<span style="color:var(--red)">✗ '+esc(e.message)+'.</span> If it works in your browser\'s address bar but fails here, the source blocks browser apps — use the Robot starter instead.'}}
+/* directory CSV */
+function parseCSV(t){const rows=[];let row=[],f='',q=false;for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}else if(c==='"')q=true;else if(c===','||c==='\t'){row.push(f);f=''}else if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++;row.push(f);f='';if(row.some(x=>x.trim()!==''))rows.push(row.map(x=>x.trim()));row=[]}else f+=c}row.push(f);if(row.some(x=>x.trim()!==''))rows.push(row.map(x=>x.trim()));return rows}
+function colsHtml(){const rows=parseCSV(B.csv||'');if(rows.length<2)return '';const C=rows[0];const o=sel=>'<option value="">—</option>'+C.map(c=>'<option'+(c===sel?' selected':'')+'>'+esc(c)+'</option>').join('');
+  return '<p class="small muted" style="margin-top:8px">'+(rows.length-1)+' rows · '+C.length+' columns</p><div class="grid2"><label class="f"><span>Title column</span><select data-role="titleCol">'+o(B.titleCol)+'</select></label><label class="f"><span>Category column</span><select data-role="catCol">'+o(B.catCol)+'</select></label><label class="f"><span>Link column</span><select data-role="linkCol">'+o(B.linkCol)+'</select></label></div>'}
+$('#bForm').addEventListener('click',async e=>{const t=e.target;
+  if(t.id==='bFetch'){if(!/^https:\/\//.test(B.url||'')){toast('Paste a data address starting with https://');return}await fetchFields()}
+  if(t.id==='bCsv'){const rows=parseCSV(B.csv||'');if(rows.length<2){toast('Need a header row and at least one row');return}const C=rows[0];B.titleCol=B.titleCol&&C.includes(B.titleCol)?B.titleCol:C[0];B.catCol=C.find(c=>/categ|type|kind|group|town|city/i.test(c))||'';B.linkCol=C.find(c=>/url|link|web|site/i.test(c))||'';saveB();$('#bCols').innerHTML=colsHtml()}
+  if(t.id==='bRobotTest'){const m=$('#bRobotMsg');m.innerHTML='<span class="spin"></span>';try{const r=await fetch(B.url);const j=await r.json();const v=getP(j,B.path);m.innerHTML=v===undefined?'<span style="color:var(--red)">✗ No value at that path.</span>':'<span style="color:var(--grn)">✓ Value now: '+esc(JSON.stringify(v).slice(0,80))+'</span>'}catch(err){m.innerHTML='Your browser couldn\'t read it ('+esc(err.message)+'). That\'s OK if it opens in a normal browser tab: the robot reads it from GitHub\'s servers.'}}});
+/* generation */
+const CRON={hourly:'7 * * * *','6h':'17 */6 * * *',daily:'23 11 * * *',weekly:'41 12 * * 1'};
+function themeCss(){const t=Object.assign({},THEMES[B.theme]);if(B.acc)t.acc=B.acc;return '--bg:'+t.bg+';--fg:'+t.fg+';--card:'+t.card+';--line:'+t.line+';--acc:'+t.acc+';--accfg:'+t.accfg+';--font:'+t.font}
+function cfgFor(owner,repo,branch){const base={title:B.title||'My tool',sub:B.sub||'',footer:B.foot||''};
+  if(B.st==='viewer')return Object.assign(base,{url:B.url,path:B.path,fields:B.fields,titleField:B.titleField,linkField:B.linkField,imageField:B.imageField,refreshMin:+B.refresh||0});
+  if(B.st==='robot')return Object.assign(base,{owner:owner||'',repo:repo||'',branch:branch||'main',label:B.label,unit:B.unit});
+  if(B.st==='directory'){const rows=parseCSV(B.csv||'');return Object.assign(base,{cols:rows[0]||[],rows:rows.slice(1),titleCol:B.titleCol,catCol:B.catCol,linkCol:B.linkCol})}
+  if(B.st==='tracker')return Object.assign(base,{fields:(B.tfields||'').split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const i=l.lastIndexOf(':');const name=(i>0?l.slice(0,i):l).trim();const ty=(i>0?l.slice(i+1):'text').trim();return ty.includes('|')?{name,type:'select',options:ty.split('|').map(s=>s.trim())}:{name,type:['number','date','note'].includes(ty.toLowerCase())?ty.toLowerCase():'text'}})});
+  if(B.st==='links')return Object.assign(base,{bio:B.bio,phone:B.phone,email:B.email,info:B.info,links:(B.links||'').split('\n').map(l=>l.split('|').map(s=>s.trim())).filter(p=>p.length>=2&&/^(https?:|mailto:|tel:)/.test(p[1])).map(p=>({label:p[0],url:p[1]}))})}
+function genHTML(owner,repo,branch){const tpl=$('#tpl-'+B.st).textContent.replace(/<\\\/script>/g,'<\/script>');const cfg=cfgFor(owner,repo,branch);
+  return tpl.replace('__TITLE__',esc(cfg.title)).replace('__THEME__',themeCss()).replace('__CFG__',JSON.stringify(cfg).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029'))}
+function genWorkflow(){const q=s=>"'"+String(s||'').replace(/'/g,"''")+"'";
+  return ['name: robot','on:','  schedule:',"    - cron: '"+CRON[B.schedule||'daily']+"'",'  workflow_dispatch:','permissions:','  contents: write','jobs:','  snapshot:','    runs-on: ubuntu-latest','    steps:','      - uses: actions/checkout@v4','      - name: Take a reading','        env:','          URL: '+q(B.url),'          VALUE_PATH: '+q(B.path),'        run: |',
+  "          python3 - <<'PY'",'          import json, os, datetime, urllib.request','          req = urllib.request.Request(os.environ["URL"], headers={"User-Agent": "github-robot", "Accept": "application/json"})','          data = json.load(urllib.request.urlopen(req, timeout=60))','          v = data','          for k in [p for p in os.environ.get("VALUE_PATH", "").split(".") if p]:','              v = v[int(k)] if isinstance(v, list) else (v or {}).get(k)','          os.makedirs("data", exist_ok=True)','          f = "data/history.json"','          h = json.load(open(f)) if os.path.exists(f) else []','          h.append({"t": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "v": v})','          json.dump(h[-3000:], open(f, "w"))','          PY',
+  '      - name: Save it','        run: |','          git config user.name "robot"','          git config user.email "robot@users.noreply.github.com"','          git add data','          git commit -m "reading" || exit 0','          git push'].join('\n')+'\n'}
+function readme(owner,repo){return '# '+(B.title||'My tool')+'\n\n'+(B.sub||$('#bDesc').value||'')+'\n\n'+(owner?'Live: https://'+owner.toLowerCase()+'.github.io/'+repo+'/\n\n':'')+'Built with Salvage ('+STARTERS[B.st].name+' starter). Single file, no build step: edit `index.html` and the site updates.\n'+(B.st==='robot'?'\nThe robot in `.github/workflows/robot.yml` takes a reading on a schedule and saves it to `data/history.json`. Run it any time from the Actions tab.\n':'')}
+function mit(name){return 'MIT License\n\nCopyright (c) '+new Date().getFullYear()+' '+name+'\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the "Software"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n'}
+function validate(){if(!B.title){toast('Give it a title');return false}
+  if(B.st==='viewer'&&(!B.url||!B.fields.length)){toast('Paste a data address and tap "Fetch + find fields" first');return false}
+  if(B.st==='robot'&&!/^https?:\/\//.test(B.url||'')){toast('Paste the data address the robot should check');return false}
+  if(B.st==='directory'&&parseCSV(B.csv||'').length<2){toast('Paste CSV with a header row');return false}return true}
+$('#bPrev').onclick=()=>{if(!validate())return;const f=document.createElement('iframe');f.className='prev';f.title='Preview';f.setAttribute('sandbox','allow-scripts allow-downloads allow-popups allow-modals');f.srcdoc=genHTML(ME&&ME.login,$('#bRepo').value,'main');$('#bPrevBox').innerHTML='<p class="small muted" style="margin:10px 0 4px">Preview (saving and favorites only work once it\'s published):</p>';$('#bPrevBox').appendChild(f);f.scrollIntoView({behavior:'smooth',block:'start'})};
+$('#bDl').onclick=()=>{if(!validate())return;dl('index.html',genHTML('','','main'),'text/html');if(B.st==='robot'){setTimeout(()=>dl('robot.yml',genWorkflow(),'text/yaml'),400);toast('Upload robot.yml to .github/workflows/ in your repo')}};
+$('#bPub').onclick=async()=>{if(!validate()||needToken())return;const owner=$('#bOwner').value||ME.login,name=slug($('#bRepo').value);$('#bRepo').value=name;
+  const step=stepper($('#bSteps'));$('#bPub').disabled=true;let s;
+  try{s=step('Creating repo <b>'+esc(owner)+'/'+esc(name)+'</b>…');const body={name,description:($('#bDesc').value||B.sub||B.title).slice(0,300),auto_init:true,has_wiki:false};
+    const repo=owner===ME.login?await gh('/user/repos',{method:'POST',body}):await gh('/orgs/'+owner+'/repos',{method:'POST',body});const br=repo.default_branch||'main';
+    await waitFor(async()=>{await gh('/repos/'+repo.full_name+'/branches/'+br);return true},10,1500);s.done('Repo created: <a href="'+esc(repo.html_url)+'" target="_blank" rel="noopener">'+esc(repo.full_name)+'</a>');
+    s=step('Uploading files…');const files=[['index.html',genHTML(owner,name,br)],['README.md',readme(owner,name)],['.nojekyll','']];
+    if($('#bMit').checked)files.push(['LICENSE',mit(ME.name||ME.login)]);if(B.st==='robot'){files.push(['.github/workflows/robot.yml',genWorkflow()]);files.push(['data/history.json','[]'])}
+    for(const [p,c] of files)await putFile(owner,name,p,c,'Add '+p,br);s.done('Uploaded '+files.length+' files');
+    const p=await publishExisting(owner,name,br,'/',step,false);
+    if(B.st==='robot'){const r=step('Starting the robot\'s first run…');const ok=await waitFor(async()=>{await gh('/repos/'+repo.full_name+'/actions/workflows/robot.yml/dispatches',{method:'POST',body:{ref:br}});return true},6,5000);ok?r.done('Robot started. Its first reading shows up in a minute or two. <a href="'+esc(repo.html_url)+'/actions" target="_blank" rel="noopener">Watch it run ↗</a>'):r.err('Could not start it. Open Actions → robot → Run workflow')}
+    if(p)toast('Published!')}
+  catch(err){(s||step('Publish')).err(err.message)}
+  $('#bPub').disabled=false};
+function startBuildFromIdea(I){B.st=I.st;B.title=I.title.replace(/^[^:]+:\s*/,'')+' '+({viewer:'board',robot:'tracker',directory:'directory',tracker:'log',links:'hub'}[I.st]||'');B.sub=I.pitch.slice(0,140);
+  if(I.src.url&&(I.st==='viewer'||I.st==='robot')){B.url=I.src.url;B.path=I.st==='robot'?(Array.isArray(I.src.path)?'':I.src.path&&!/^(features|results|hits|docs|events|items|response\.docs)$/.test(I.src.path)?I.src.path:''):'';B.fields=[]}
+  $('#bRepo').dataset.touched='';$('#bRepo').value=slug(B.title);saveB();drawBuild();go('build');
+  if(B.st==='viewer'&&B.url)fetchFields()}
+
+/* ====================== mine ====================== */
+const ISTAT=['Idea','Building','Live','Dropped'];
+function drawMine(){$('#mIdeas').innerHTML=ideas.length?ideas.map((I,i)=>'<div class="item"><div class="nm">'+esc(I.title)+'</div><div class="small muted">'+esc(I.pitch)+'</div><div class="row" style="margin-top:6px"><select data-ist="'+i+'" style="max-width:150px;min-height:36px">'+ISTAT.map(s=>'<option'+(I.status===s?' selected':'')+'>'+s+'</option>').join('')+'</select><button class="btn ghost sm" data-ib="'+i+'">Build</button><button class="btn ghost sm" data-idel="'+i+'">Delete</button></div><textarea data-inote="'+i+'" placeholder="Notes" style="min-height:54px;margin-top:6px">'+esc(I.notes||'')+'</textarea></div>').join(''):'<p class="small muted">Spin some ideas and save the good ones.</p>';
+  $('#mParts').innerHTML=parts.length?parts.map(r=>'<div class="part" data-full="'+esc(r.full_name)+'" role="button" tabindex="0"><span class="stars">★ '+fmtN(r.stargazers_count)+'</span><div class="nm">'+esc(r.full_name)+'</div><div class="ds">'+esc((r.description||'').slice(0,140))+'</div></div>').join(''):'<p class="small muted">Saved GitHub finds show up here.</p>'}
+$('#mIdeas').addEventListener('change',e=>{const i=e.target.dataset.ist;if(i!=null){ideas[+i].status=e.target.value;saveIdeas()}});
+$('#mIdeas').addEventListener('input',e=>{const i=e.target.dataset.inote;if(i!=null){ideas[+i].notes=e.target.value;saveIdeas()}});
+$('#mIdeas').addEventListener('click',e=>{const t=e.target;if(t.dataset.idel!=null&&confirm('Delete this idea?')){ideas.splice(+t.dataset.idel,1);saveIdeas();drawMine()}if(t.dataset.ib!=null)startBuildFromIdea(ideas[+t.dataset.ib])});
+$('#mParts').addEventListener('click',e=>{const p=e.target.closest('.part');if(p)openPart(parts.find(r=>r.full_name===p.dataset.full))});
+$('#mLoad').onclick=async()=>{if(needToken())return;$('#mMsg').innerHTML='<span class="spin"></span>';
+  try{let list=await gh('/user/repos?per_page=100&sort=updated&affiliation=owner,organization_member');list=list.filter(r=>!r.private);
+    $('#mMsg').textContent=list.length+' public repos';
+    $('#mRepos').innerHTML=list.map(r=>{const live=r.has_pages?'https://'+r.owner.login.toLowerCase()+'.github.io/'+r.name+'/':'';return '<div class="item"><div class="nm">'+esc(r.full_name)+(r.fork?' <span class="small muted">(copy)</span>':'')+'</div><div class="small muted">'+esc(r.description||'')+' · updated '+ago(r.pushed_at)+'</div><div class="row" style="margin-top:6px">'+(live?'<a class="btn sm" href="'+esc(live)+'" target="_blank" rel="noopener">Open site</a>':'<button class="btn ghost sm" data-pg="'+esc(r.full_name)+'" data-br="'+esc(r.default_branch)+'">Turn on Pages</button>')+'<a class="btn ghost sm" href="https://github.dev/'+esc(r.full_name)+'" target="_blank" rel="noopener">Edit</a><a class="btn ghost sm" href="'+esc(r.html_url)+'" target="_blank" rel="noopener">Code</a><a class="btn ghost sm" href="'+esc(r.html_url)+'/actions" target="_blank" rel="noopener">Robots</a></div><ul class="steps" data-ps="'+esc(r.full_name)+'"></ul></div>'}).join('')}
+  catch(e){$('#mMsg').textContent=e.message}};
+$('#mRepos').addEventListener('click',async e=>{const t=e.target;if(t.dataset.pg){const [o,n]=t.dataset.pg.split('/');t.disabled=true;await publishExisting(o,n,t.dataset.br,'/',stepper($('[data-ps="'+t.dataset.pg+'"]')),false)}});
+$('#bkOut').onclick=()=>dl('salvage-backup-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify({app:'salvage',v:1,ideas,parts,build:B},null,1),'application/json');
+$('#bkIn').onchange=async e=>{try{const j=JSON.parse(await e.target.files[0].text());if(j.app!=='salvage')throw 0;ideas=j.ideas||[];parts=j.parts||[];if(j.build)B=j.build;saveIdeas();saveParts();saveB();drawMine();drawBuild();toast('Restored')}catch(_){toast('Not a Salvage backup')}e.target.value=''};
+
+/* ====================== boot ====================== */
+drawTokState();drawReels();drawIdea();drawSources();drawBuild();drawMine();
+const h0=location.hash.slice(1);if(['parts','build','mine','setup'].includes(h0))go(h0);
+window.addEventListener('hashchange',()=>{const v=location.hash.slice(1);if(['ideas','parts','build','mine','setup'].includes(v))go(v)});
+</script>
+</body>
+</html>
